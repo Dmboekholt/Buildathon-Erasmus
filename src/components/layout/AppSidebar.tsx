@@ -8,6 +8,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,6 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import bdoLogo from "@/assets/bdo-logo.png";
 
 const items = [
   { title: "Analytics", url: "/", icon: BarChart3 },
@@ -33,17 +35,16 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
         <div className="flex items-center gap-3 px-2 py-4">
-          <div
-            aria-hidden="true"
-            className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1a2b4a]"
-          >
-            <span className="text-[13px] font-bold tracking-tight text-white">JL</span>
-          </div>
+          <img
+            src={bdoLogo}
+            alt="BDO"
+            className="h-8 w-auto shrink-0 object-contain"
+          />
           <div className="leading-tight group-data-[collapsible=icon]:hidden">
-            <div className="text-[18px] font-bold uppercase tracking-tight text-[#1a2b4a]">
+            <div className="text-[16px] font-bold uppercase tracking-tight text-[#1a2b4a]">
               Judgment Ledger
             </div>
-            <div className="text-[12px] uppercase tracking-[0.08em] text-muted-foreground">
+            <div className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
               Investment case reviews
             </div>
           </div>
@@ -74,6 +75,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex flex-col gap-2 px-2 py-4 group-data-[collapsible=icon]:hidden">
+          <span className="eyebrow">Powered by</span>
+          <img src={bdoLogo} alt="BDO" className="h-5 w-auto object-contain" />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

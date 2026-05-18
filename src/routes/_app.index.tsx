@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { listImprovements } from "@/lib/review.functions";
+import { Highlight } from "@/components/brand/Highlight";
 
 export const Route = createFileRoute("/_app/")({
   component: AnalyticsPage,
@@ -52,7 +53,7 @@ function AnalyticsPage() {
         <div className="max-w-2xl">
           <div className="eyebrow mb-4">00. Analytics</div>
           <h1 className="font-display text-[44px] leading-[48px] tracking-[-0.025em] text-foreground">
-            Signals from every review,
+            Signals from every <Highlight>review</Highlight>,
             <br />
             <span className="text-muted-foreground">measured over time.</span>
           </h1>

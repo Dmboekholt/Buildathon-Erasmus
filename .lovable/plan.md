@@ -1,55 +1,21 @@
 ## Goal
-Reskin the entire app to match BDO's bold, corporate, flat-rectangular identity. No code/feature changes — visuals only.
+Introduce the BDO navy blue (#1A2B4A) as a secondary highlight color and place the BDO logo in the app chrome.
 
-## 1. Design tokens (`src/styles.css`)
-Rewrite the `@theme` block with the BDO palette and typography:
+## 1. Add the logo asset
+- Copy `user-uploads://image.png` to `src/assets/bdo-logo.png`.
+- Import it in `src/components/layout/AppSidebar.tsx` and render it in the sidebar header in place of the current "JL" navy square. Constrain height (~32px), preserve aspect ratio. Keep the "Judgment Ledger" wordmark text next to it (navy, bold, uppercase) so the brand pairing reads as "BDO  Judgment Ledger".
+- Also add a small footer block at the bottom of the sidebar with the eyebrow label "Powered by" above a smaller version of the logo (~20px tall), so the brand shows up in two places.
 
-- Colors:
-  - `--color-background: #FFFFFF`
-  - `--color-foreground: #1A1A1A`
-  - `--color-muted: #F2F2F2`, `--color-muted-foreground: #6B6B6B`
-  - `--color-placeholder: #9A9A9A`
-  - `--color-border / --color-input: #E4E4E4`
-  - `--color-primary: #E40521`, `--color-primary-foreground: #FFFFFF`
-  - `--color-accent: #E40521`
-  - `--color-secondary: #1A2B4A` (navy, for wordmark / strong accents)
-  - `--color-success: #2E7D32`, `--color-warning: #B7791F`
-  - Sidebar tokens aligned to white surface + red active
-- Radius: set all radius tokens to `0` (square corners everywhere).
-- Type scale:
-  - display 44/1.1 weight 700
-  - section 24 weight 700
-  - body 18/1.5 weight 400
-  - caption 14 weight 400 (`#6B6B6B`)
-- Font: load Archivo (400, 700) from Google Fonts via `__root.tsx` `<link>` tags, set `--font-sans` / `--font-display` to `"Archivo", "Inter", sans-serif`.
+## 2. Navy blue accent utility
+- In `src/styles.css`, add a `.highlight-navy` utility: `color: #ffffff; background-color: #1A2B4A; padding: 0 6px;` for inline text highlights, plus a `.text-navy` utility (`color: #1A2B4A`) for headline emphasis.
+- Add a `Highlight` component at `src/components/brand/Highlight.tsx` that wraps children in a `<mark class="highlight-navy">`. Lets us drop navy highlights anywhere with `<Highlight>text</Highlight>`.
 
-Add base layer rules:
-- `body` font-size 18px, line-height 1.5, letter-spacing 0.
-- Headings weight 700, near-black, tight tracking.
-- New utility class `.eyebrow` → 14px, weight 700, uppercase, letter-spacing 0.08em, color `#E40521`.
-- New utility `.btn-bdo` (solid red, white uppercase 15px/700, letter-spacing 0.05em, padding 16px 32px, no radius) as a fallback for places not using the shadcn Button.
-
-## 2. Button + input primitives
-- `src/components/ui/button.tsx`: change default variant to solid `bg-primary text-primary-foreground uppercase tracking-[0.05em] font-bold`, remove rounded classes, set `rounded-none`, padding 16/32. Keep variants but strip radii and shadows in each.
-- `src/components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, `card.tsx`, `dialog.tsx`, `badge.tsx`, `tabs.tsx`: replace any `rounded-*` with `rounded-none`, strip `shadow-*`. Cards use `bg-card border border-border p-8`, no shadow.
-
-## 3. Layout chrome
-- `src/routes/__root.tsx`: inject Google Fonts `<link>` for Archivo 400/700; ensure body uses white bg.
-- `src/components/layout/AppSidebar.tsx` (top nav): white bg, charcoal links weight 700, active/hover red `#E40521`, inactive `#6B6B6B`. Logo wordmark in navy `#1A2B4A`, bold. Add a solid red CONTACT block top-right (white uppercase text, no radius, padding 16/32).
-- Add a reusable diagonal red accent block component used on hero/landing surfaces (`src/components/brand/DiagonalAccent.tsx`) — a `clip-path` red rectangle sliced diagonally.
-
-## 4. Page surfaces
-Sweep each route (`_app.index`, `_app.cases.*`, `_app.curriculum.*`, `_app.manager`) and:
-- Replace gradients/glow/shadow utilities with flat surfaces.
-- Replace `rounded-*` with `rounded-none`.
-- Page titles → `text-[44px] font-bold leading-[1.1]`.
-- Section labels → `eyebrow` class (red uppercase).
-- Cards → `bg-[#F2F2F2] border border-border p-8`.
-- Primary CTAs → default Button (red).
-- Use the diagonal accent block on the home hero and curriculum hero only.
-
-## 5. QA
-- Visit `/`, `/cases`, `/curriculum`, `/manager` in the preview, screenshot each, verify: square corners, red CTAs, white bg, no shadows, Archivo loaded, eyebrows red uppercase.
+## 3. Apply navy highlight in a few key places
+Keep red as the dominant CTA color; navy is reserved for occasional emphasis.
+- `src/routes/_app.index.tsx`: wrap one key word in the hero/section heading with `<Highlight>`.
+- `src/routes/_app.cases.index.tsx`: wrap the keyword in the page title (e.g. "Cases") with `<Highlight>`.
+- `src/routes/_app.curriculum.index.tsx`: wrap the keyword in the curriculum hero title with `<Highlight>`.
+- Eyebrow labels stay red. Buttons stay red. Only the chosen heading words get the navy mark.
 
 ## Out of scope
-- No feature/logic changes. No content rewrites. Curriculum seeding logic untouched.
+- No layout, copy, or feature changes beyond placing the logo and the navy highlight component.

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listCases } from "@/lib/cases.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Highlight } from "@/components/brand/Highlight";
 
 export const Route = createFileRoute("/_app/cases/")({
   component: CasesPage,
@@ -19,7 +20,7 @@ function CasesPage() {
   return (
     <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
       <header className="mb-12">
-        <h1 className="text-page-title text-foreground">Cases</h1>
+        <h1 className="text-page-title text-foreground"><Highlight>Cases</Highlight></h1>
         <p className="mt-3 text-caption text-muted-foreground">
           Investment memoranda available for review.
         </p>

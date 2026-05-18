@@ -2,6 +2,7 @@ import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getProgress, LEVEL_NAMES } from "@/lib/curriculum.functions";
+import { Highlight } from "@/components/brand/Highlight";
 
 export const Route = createFileRoute("/_app/curriculum")({
   component: CurriculumLayout,
@@ -24,7 +25,7 @@ function CurriculumLayout() {
       <header className="mb-10">
         <div className="eyebrow mb-4">02. Learning curriculum</div>
         <h1 className="font-display text-[44px] leading-[48px] tracking-[-0.025em] text-foreground">
-          Practice judgment on
+          Practice <Highlight>judgment</Highlight> on
           <br />
           <span className="text-muted-foreground">historical cases.</span>
         </h1>
