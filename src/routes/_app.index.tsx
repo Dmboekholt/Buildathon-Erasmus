@@ -52,7 +52,7 @@ function DashboardPage() {
   const cases = data ?? [];
 
   return (
-    <div className="mx-auto max-w-[1280px] px-10 py-14">
+    <div className="mx-auto max-w-[1280px] px-12 py-16">
       {/* Hero */}
       <header className="mb-14 flex items-end justify-between gap-8">
         <div className="max-w-2xl">
