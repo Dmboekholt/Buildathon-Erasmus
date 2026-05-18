@@ -1,105 +1,61 @@
-## Goal
+## Changes to Learning Curriculum module
 
-Build the Learning Curriculum module: historical case library, analyst challenge interface with three-way scoring (historical / AI / senior reasoning), 10-level career ladder progression, senior upload portal, and an empty Manager Dashboard tab. Seeds with 8 famous historical cases. Single shared demo analyst.
+### 1. Sidebar restructure (`AppSidebar.tsx`)
+- Remove the collapsible "Learning Curriculum" group with sub-items.
+- "Learning Curriculum" becomes a single top-level item → `/curriculum` (Challenge view only).
+- Add a separate top-level "Manager Dashboard" item directly under "Cases" → `/manager`.
+- Remove Senior Upload entry and its route file (`_app.curriculum.upload.tsx`).
 
-## 1. Sidebar restructure
+### 2. Routes
+- Delete `_app.curriculum.upload.tsx`.
+- Move manager view: delete `_app.curriculum.manager.tsx`, create `_app.manager.tsx` (empty placeholder, same content).
+- Simplify `_app.curriculum.tsx` layout: remove tab nav (no more sub-pages); keep progress ladder header + `<Outlet />`.
+- Rewrite `_app.curriculum.index.tsx` for the new case flow (below).
 
-In `AppSidebar.tsx`, replace the flat `Learning Curriculum` entry with a collapsible group containing three sub-items:
+### 3. Case content overhaul (DB + seed)
+Migration on `curriculum_cases`:
+- Add `questions jsonb not null default '[]'` — array of `{ id, prompt, expected_answer, senior_answer, ai_answer }`.
+- Keep `case_text` but expect much longer content (multi-paragraph financial cases involving multiples, comparables, LBO math, accretion/dilution, restructuring, etc.).
+- Drop reliance on single `historical_answer` / `ai_answer` / `senior_reasoning` for the comparison view (kept for back-compat, unused going forward).
 
-- Challenge (`/curriculum`)
-- Senior Upload (`/curriculum/upload`)
-- Manager Dashboard (`/curriculum/manager`)
+Re-seed: replace `seedCurriculumIfEmpty` to generate ~8 in-depth cases (e.g. RJR Nabisco LBO, AOL–Time Warner multiples, Kraft–Heinz synergies, Valeant roll-up, WeWork S-1, GE conglomerate discount, Anheuser-Busch InBev leverage, Lehman repo 105). Each case:
+- 600–1200 word narrative with financials, multiples, capital structure.
+- 4–6 structured questions (valuation multiple to apply, implied EV, key risk, recommended action, etc.).
+- Per-question `expected_answer` (historical/textbook), `senior_answer` (senior-style reasoning), `ai_answer` (AI's take).
 
-Use `SidebarMenuSub` from the shadcn sidebar primitives. Keep Analytics and Cases as-is.
+### 4. Attempt model (DB)
+Replace `written_insight` single-string usage:
+- Add `answers jsonb not null default '{}'` on `curriculum_attempts` — `{ [questionId]: userAnswer }`.
+- Add `per_question_scores jsonb not null default '{}'` — `{ [questionId]: { score, feedback } }`.
+- Keep aggregate `accuracy_score`, `alignment_*`, `feedback` (now computed as averages / overall summary).
 
-## 2. Database (one migration)
+### 5. Challenge UX (`_app.curriculum.index.tsx`)
+Three-state flow:
+1. **Browse**: list of available cases (title, era, industry, difficulty). Each row has a **Start case** button.
+2. **In-progress**: full case text on top; below it, every question rendered with its own textarea. Sticky "Check answers" button at bottom (disabled until all answered). User can save/exit and resume (in-progress state held in component; no DB draft needed for MVP).
+3. **Reviewed**: after submit, for each question show 4 columns/blocks:
+   - Your answer
+   - Expected (historical) answer
+   - Senior's answer
+   - AI's answer
+   - Per-question score + short feedback
+   Plus overall accuracy, alignment metrics, and progression toward next level. Buttons: **Try another case**, **Retry this case**.
 
-New tables (RLS on, demo-open policy mirroring existing tables):
+### 6. Server functions (`curriculum.functions.ts`)
+- Update `seedCurriculumIfEmpty` to emit the new long-form + questions schema.
+- Replace `submitAttempt({ caseId, answers })`: AI scores each `{question, userAnswer, expected_answer, senior_answer}` and returns per-question `{score, feedback}` + aggregate metrics; persists into new columns; trigger continues to bump level.
+- Remove `submitSeniorCase` (senior upload gone).
+- Keep `listCases`, `getCase`, `getProgress`, `listAttempts`.
 
-`curriculum_cases`
+### 7. Out of scope
+- No new auth, no draft persistence, no editing of seeded cases, no charts in Manager Dashboard (still placeholder), no MC questions.
 
-- `id`, `title`, `era`, `industry`, `difficulty` int 1-10
-- `case_text` text (the scenario the analyst reads)
-- `expected_insights` text[] (key points used during scoring)
-- `historical_answer` text (what actually happened + senior team conclusion)
-- `ai_answer` text (AI's own take)
-- `senior_reasoning` text (senior-style explanation)
-- `source` text ('seeded' | 'senior_upload')
-- `created_at`, `updated_at`
-
-`curriculum_attempts`
-
-- `id`, `case_id` fk, `analyst_id` text default `'demo-analyst'`
-- `analyst_level` int (1-10, snapshot at attempt time)
-- `written_insight` text
-- `accuracy_score` int 0-100
-- `alignment_historical` int 0-100
-- `alignment_ai` int 0-100
-- `alignment_senior` int 0-100
-- `skill_indicators` jsonb (e.g. `{ insight, risk_awareness, pattern_recognition }` each 0-100)
-- `feedback` text
-- `created_at`
-
-`curriculum_progress`
-
-- `analyst_id` text pk default `'demo-analyst'`
-- `level` int default 1
-- `updated_at`
-
-Trigger: after each attempt insert, recompute rolling-window accuracy (last 5 attempts at current level). If avg >= 80, increment level (cap 10).
-
-## 3. Server functions (`src/lib/curriculum.functions.ts`)
-
-- `seedCuriculumIfEmpty()`: if `curriculum_cases` is empty, generate 8 famous historical cases (Enron 2001, LTCM 1998, AOL-Time Warner 2000, Lehman 2008, Worldcom 2002, Theranos, Wirecard, Kodak digital transition) via Lovable AI Gateway with `Output.object` schema producing all fields at once. Difficulty spread 1-8.
-- `listCases({ level })`: returns cases with `difficulty <= level + 1` not yet attempted (or fewest attempts first).
-- `getCase({ id })`: returns case text and expected insights only (no spoilers).
-- `getRevealedCase({ id, attemptId })`: returns historical_answer, ai_answer, senior_reasoning, expected_insights for post-submit reveal.
-- `submitAttempt({ caseId, writtenInsight })`: calls AI with case + expected insights + analyst answer; returns structured `{ accuracy_score, alignment_historical, alignment_ai, alignment_senior, skill_indicators, feedback }`; inserts attempt; trigger recomputes level.
-- `getProgress()`: returns current level + last 10 attempts + rolling accuracy + next-level threshold.
-- `submitSeniorCase({ rawText, title })`: AI converts raw text into the full structured case (all five generated fields) and inserts as `source='senior_upload'`.
-- `listAttempts({ limit })`: for the progress timeline.
-
-All AI calls use `google/gemini-3-flash-preview` via the existing fetch-based pattern in `review.functions.ts` (consistent with the codebase).
-
-## 4. Routes
-
-- `src/routes/_app.curriculum.tsx` (existing, rewrite): layout route with `<Outlet />` plus a level/progress header card.
-- `src/routes/_app.curriculum.index.tsx`: Challenge interface.
-  - Auto-triggers seeding on first mount if empty.
-  - Picks a case appropriate for current level, shows case text + expected-insight count.
-  - Textarea for written insight + Submit button.
-  - On submit: shows scoring breakdown (4 progress bars + skill indicators) and a three-column reveal: Historical Answer | AI Answer | Senior Reasoning.
-  - Button to load the next case.
-- `src/routes/_app.curriculum.upload.tsx`: Senior Upload Portal.
-  - Title + large textarea for the raw case material. Submit converts via AI and lists the resulting case.
-  - Below: table of recent analyst attempts (case title, score, date) for senior review.
-- `src/routes/_app.curriculum.manager.tsx`: empty Manager Dashboard placeholder. Header + "Coming in a later module." copy. No data wiring.
-
-## 5. Progression UX
-
-Curriculum layout header shows:
-
-- Level name (Analyst Basics ... Expert Advisor) + year number
-- Horizontal 10-segment ladder, current segment filled
-- Rolling accuracy (last 5 at current level) with 80% target indicator
-- "1 case from promotion" type hint when close
-
-## 6. Out of scope
-
-- No multi-user auth (single `'demo-analyst'`).
-- No multiple-choice mode (written insight only).
-- No edit/delete for senior-uploaded cases.
-- No charts on Manager Dashboard.
-- No integration with the existing case-review flow (separate module).
-
-## Technical notes
-
-- Lovable AI Gateway: reuse the inline `fetch` + JSON-schema validation pattern from `review.functions.ts`. `LOVABLE_API_KEY` is already set.
-- Seeding runs server-side, idempotent via a `SELECT count` guard. Single bulk call returns all 8 cases.
-- Scoring prompt asks the model for 0-100 alignment vs each of historical/ai/senior, an overall accuracy, three skill indicators, and short feedback. Strict zod schema.
-- Trigger uses `plpgsql` to compute rolling avg over last 5 attempts where `analyst_level = current level` and bump level when >= 80.
-- No em-dash or en-dash anywhere (per project memory).
-
-&nbsp;
-
-prefill senior answers, so when the analyst is done with writing up his answers and asks the ai to check it, the ai scores the analysts answers, gives it a model answer and also shows the senior answer 
+### Files touched
+- `src/components/layout/AppSidebar.tsx` — restructure nav.
+- `src/routes/_app.curriculum.tsx` — strip tabs.
+- `src/routes/_app.curriculum.index.tsx` — full rewrite (browse / in-progress / reviewed).
+- `src/routes/_app.curriculum.upload.tsx` — delete.
+- `src/routes/_app.curriculum.manager.tsx` — delete.
+- `src/routes/_app.manager.tsx` — create (placeholder).
+- `src/lib/curriculum.functions.ts` — rewrite seed + submit, remove senior upload.
+- Migration: add `questions` to `curriculum_cases`; add `answers` + `per_question_scores` to `curriculum_attempts`; re-seed flag (clear existing seeded rows so new long-form cases populate on next load).
