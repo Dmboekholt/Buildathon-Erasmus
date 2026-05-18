@@ -1,61 +1,36 @@
-## Changes to Learning Curriculum module
+## Fix learning curriculum cases
 
-### 1. Sidebar restructure (`AppSidebar.tsx`)
-- Remove the collapsible "Learning Curriculum" group with sub-items.
-- "Learning Curriculum" becomes a single top-level item → `/curriculum` (Challenge view only).
-- Add a separate top-level "Manager Dashboard" item directly under "Cases" → `/manager`.
-- Remove Senior Upload entry and its route file (`_app.curriculum.upload.tsx`).
+### Root cause
+DB inspection shows every seeded case is 493-722 chars with `questions = []`. The InProgressCase view has nothing to render because there are no questions. Two things to fix: bad seed data, and a prompt that does not actually produce the structure we want.
 
-### 2. Routes
-- Delete `_app.curriculum.upload.tsx`.
-- Move manager view: delete `_app.curriculum.manager.tsx`, create `_app.manager.tsx` (empty placeholder, same content).
-- Simplify `_app.curriculum.tsx` layout: remove tab nav (no more sub-pages); keep progress ladder header + `<Outlet />`.
-- Rewrite `_app.curriculum.index.tsx` for the new case flow (below).
+### 1. Clear bad seed data
+Migration: `DELETE FROM curriculum_attempts; DELETE FROM curriculum_cases WHERE source='seeded';` so the next visit re-seeds from scratch with the new prompt.
 
-### 3. Case content overhaul (DB + seed)
-Migration on `curriculum_cases`:
-- Add `questions jsonb not null default '[]'` — array of `{ id, prompt, expected_answer, senior_answer, ai_answer }`.
-- Keep `case_text` but expect much longer content (multi-paragraph financial cases involving multiples, comparables, LBO math, accretion/dilution, restructuring, etc.).
-- Drop reliance on single `historical_answer` / `ai_answer` / `senior_reasoning` for the comparison view (kept for back-compat, unused going forward).
+### 2. Rewrite the seed prompt (`src/lib/curriculum.functions.ts`)
+Switch from one big blob to a strict section-based case structure. Each generated case must include all of:
+- **Background and deal context** (what is happening, who the players are, timeline)
+- **Financials** (revenue, EBITDA, margins, growth, leverage, multiples, share price/market cap, ideally a small text-table)
+- **Management and governance** (CEO, CFO, board dynamics, prior track record, incentives)
+- **Risks and red flags** (concrete signals an analyst could see at the time)
+- **Specific deal details** (price, structure, financing, comparables, covenants, synergies)
 
-Re-seed: replace `seedCurriculumIfEmpty` to generate ~8 in-depth cases (e.g. RJR Nabisco LBO, AOL–Time Warner multiples, Kraft–Heinz synergies, Valeant roll-up, WeWork S-1, GE conglomerate discount, Anheuser-Busch InBev leverage, Lehman repo 105). Each case:
-- 600–1200 word narrative with financials, multiples, capital structure.
-- 4–6 structured questions (valuation multiple to apply, implied EV, key risk, recommended action, etc.).
-- Per-question `expected_answer` (historical/textbook), `senior_answer` (senior-style reasoning), `ai_answer` (AI's take).
+Tighten:
+- `case_text` must be 1500+ characters, written as multiple labeled paragraphs (the section headers above appear inside `case_text`).
+- `questions` minimum 3, maximum 6, each with `id`, `prompt`, `expected_answer`, `senior_answer`, `ai_answer`.
+- At least 2 questions must require numerical reasoning, at least 1 must be about risk or pushback.
+- Generate one case at a time (already the pattern) so a single bad response does not kill the batch.
 
-### 4. Attempt model (DB)
-Replace `written_insight` single-string usage:
-- Add `answers jsonb not null default '{}'` on `curriculum_attempts` — `{ [questionId]: userAnswer }`.
-- Add `per_question_scores jsonb not null default '{}'` — `{ [questionId]: { score, feedback } }`.
-- Keep aggregate `accuracy_score`, `alignment_*`, `feedback` (now computed as averages / overall summary).
+### 3. Make seed failures visible
+- If `seedCurriculumIfEmpty` ends with `seeded === 0` and the DB is still empty, surface that on the Challenge page (instead of an empty cards grid with no signal) with a Retry button.
+- Log per-case failure reason on the server so we can see what the gateway returned.
 
-### 5. Challenge UX (`_app.curriculum.index.tsx`)
-Three-state flow:
-1. **Browse**: list of available cases (title, era, industry, difficulty). Each row has a **Start case** button.
-2. **In-progress**: full case text on top; below it, every question rendered with its own textarea. Sticky "Check answers" button at bottom (disabled until all answered). User can save/exit and resume (in-progress state held in component; no DB draft needed for MVP).
-3. **Reviewed**: after submit, for each question show 4 columns/blocks:
-   - Your answer
-   - Expected (historical) answer
-   - Senior's answer
-   - AI's answer
-   - Per-question score + short feedback
-   Plus overall accuracy, alignment metrics, and progression toward next level. Buttons: **Try another case**, **Retry this case**.
+### 4. Defensive UI in `_app.curriculum.index.tsx`
+In `InProgressCase`, if `c.questions.length === 0` after load, render an explicit "This case is missing questions. Re-seed the library." block with a Re-seed action, so a future bad row never silently hides the form.
 
-### 6. Server functions (`curriculum.functions.ts`)
-- Update `seedCurriculumIfEmpty` to emit the new long-form + questions schema.
-- Replace `submitAttempt({ caseId, answers })`: AI scores each `{question, userAnswer, expected_answer, senior_answer}` and returns per-question `{score, feedback}` + aggregate metrics; persists into new columns; trigger continues to bump level.
-- Remove `submitSeniorCase` (senior upload gone).
-- Keep `listCases`, `getCase`, `getProgress`, `listAttempts`.
-
-### 7. Out of scope
-- No new auth, no draft persistence, no editing of seeded cases, no charts in Manager Dashboard (still placeholder), no MC questions.
+### 5. Out of scope
+No schema changes beyond the data wipe. No new auth, no Manager Dashboard, no Senior Upload.
 
 ### Files touched
-- `src/components/layout/AppSidebar.tsx` — restructure nav.
-- `src/routes/_app.curriculum.tsx` — strip tabs.
-- `src/routes/_app.curriculum.index.tsx` — full rewrite (browse / in-progress / reviewed).
-- `src/routes/_app.curriculum.upload.tsx` — delete.
-- `src/routes/_app.curriculum.manager.tsx` — delete.
-- `src/routes/_app.manager.tsx` — create (placeholder).
-- `src/lib/curriculum.functions.ts` — rewrite seed + submit, remove senior upload.
-- Migration: add `questions` to `curriculum_cases`; add `answers` + `per_question_scores` to `curriculum_attempts`; re-seed flag (clear existing seeded rows so new long-form cases populate on next load).
+- Migration: clear `curriculum_cases` (seeded) + `curriculum_attempts`.
+- `src/lib/curriculum.functions.ts`: rewrite seed prompt and validation; better error surface from seed.
+- `src/routes/_app.curriculum.index.tsx`: empty-state and missing-questions fallbacks.
