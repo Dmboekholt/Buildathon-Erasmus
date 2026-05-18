@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useConversation } from "@elevenlabs/react";
+import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { Button } from "@/components/ui/button";
 
 type Props = {
@@ -13,7 +13,15 @@ type TranscriptEntry = {
   at: number;
 };
 
-export function ReviewSession({ analystWork, company }: Props) {
+export function ReviewSession(props: Props) {
+  return (
+    <ConversationProvider>
+      <ReviewSessionInner {...props} />
+    </ConversationProvider>
+  );
+}
+
+function ReviewSessionInner({ analystWork, company }: Props) {
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasEnded, setHasEnded] = useState(false);
