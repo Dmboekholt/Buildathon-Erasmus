@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppCurriculumRouteImport } from './routes/_app.curriculum'
+import { Route as AppCurriculumIndexRouteImport } from './routes/_app.curriculum.index'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 
@@ -29,6 +30,11 @@ const AppCurriculumRoute = AppCurriculumRouteImport.update({
   path: '/curriculum',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCurriculumIndexRoute = AppCurriculumIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppCurriculumRoute,
+} as any)
 const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   id: '/cases/',
   path: '/cases/',
@@ -42,29 +48,31 @@ const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
-  '/curriculum': typeof AppCurriculumRoute
+  '/curriculum': typeof AppCurriculumRouteWithChildren
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases/': typeof AppCasesIndexRoute
+  '/curriculum/': typeof AppCurriculumIndexRoute
 }
 export interface FileRoutesByTo {
-  '/curriculum': typeof AppCurriculumRoute
   '/': typeof AppIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
   '/cases': typeof AppCasesIndexRoute
+  '/curriculum': typeof AppCurriculumIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
-  '/_app/curriculum': typeof AppCurriculumRoute
+  '/_app/curriculum': typeof AppCurriculumRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
   '/_app/cases/': typeof AppCasesIndexRoute
+  '/_app/curriculum/': typeof AppCurriculumIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/curriculum' | '/cases/$caseId' | '/cases/'
+  fullPaths: '/' | '/curriculum' | '/cases/$caseId' | '/cases/' | '/curriculum/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/curriculum' | '/' | '/cases/$caseId' | '/cases'
+  to: '/' | '/cases/$caseId' | '/cases' | '/curriculum'
   id:
     | '__root__'
     | '/_app'
@@ -72,6 +80,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/cases/$caseId'
     | '/_app/cases/'
+    | '/_app/curriculum/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -101,6 +110,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCurriculumRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/curriculum/': {
+      id: '/_app/curriculum/'
+      path: '/'
+      fullPath: '/curriculum/'
+      preLoaderRoute: typeof AppCurriculumIndexRouteImport
+      parentRoute: typeof AppCurriculumRoute
+    }
     '/_app/cases/': {
       id: '/_app/cases/'
       path: '/cases'
@@ -118,15 +134,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppCurriculumRouteChildren {
+  AppCurriculumIndexRoute: typeof AppCurriculumIndexRoute
+}
+
+const AppCurriculumRouteChildren: AppCurriculumRouteChildren = {
+  AppCurriculumIndexRoute: AppCurriculumIndexRoute,
+}
+
+const AppCurriculumRouteWithChildren = AppCurriculumRoute._addFileChildren(
+  AppCurriculumRouteChildren,
+)
+
 interface AppRouteChildren {
-  AppCurriculumRoute: typeof AppCurriculumRoute
+  AppCurriculumRoute: typeof AppCurriculumRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
   AppCasesCaseIdRoute: typeof AppCasesCaseIdRoute
   AppCasesIndexRoute: typeof AppCasesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppCurriculumRoute: AppCurriculumRoute,
+  AppCurriculumRoute: AppCurriculumRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
   AppCasesCaseIdRoute: AppCasesCaseIdRoute,
   AppCasesIndexRoute: AppCasesIndexRoute,
@@ -140,3 +168,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
