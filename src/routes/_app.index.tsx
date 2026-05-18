@@ -152,11 +152,6 @@ function DashboardPage() {
                       </div>
                     </div>
 
-                    {c.summary && (
-                      <p className="text-body leading-relaxed text-muted-foreground">
-                        {c.summary}
-                      </p>
-                    )}
 
                     <div className="flex justify-end">
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
