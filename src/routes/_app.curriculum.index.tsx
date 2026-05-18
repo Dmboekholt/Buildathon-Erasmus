@@ -7,6 +7,7 @@ import {
   getCase,
   submitAttempt,
   seedCurriculumIfEmpty,
+  forceReseedCurriculum,
 } from "@/lib/curriculum.functions";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
