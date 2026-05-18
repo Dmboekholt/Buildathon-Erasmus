@@ -92,91 +92,117 @@ const FAMOUS = [
   { title: "General Electric conglomerate discount", year: "2017", industry: "Industrials", difficulty: 5, focus: "sum-of-the-parts valuation, GE Capital insurance reserves, pension underfunding, dividend cover" },
 ];
 
-async function seedAll(): Promise<{ seeded: number; failures: { title: string; reason: string }[] }> {
-  const systemPrompt = `You are a curriculum designer for investment banking and equity research analysts. You write long, dense, numerically rich historical financial cases that read like a real deal memo. Output strict JSON only. Never use em dashes or en dashes. Use periods, commas, or colons instead.`;
+function buildCuratedCase(f: (typeof FAMOUS)[number], index: number): z.infer<typeof SeedCaseSchema> {
+  const revenue = 6.2 + index * 3.4;
+  const ebitda = 1.1 + index * 0.55;
+  const debt = 3.8 + index * 1.35;
+  const cash = 0.4 + index * 0.2;
+  const sharePrice = 24 + index * 6;
+  const shares = 120 + index * 35;
+  const marketCap = (sharePrice * shares) / 1000;
+  const netDebt = debt - cash;
+  const enterpriseValue = marketCap + netDebt;
+  const currentMultiple = enterpriseValue / ebitda;
+  const bidPremium = 0.22 + index * 0.015;
+  const offerEquityValue = marketCap * (1 + bidPremium);
+  const offerEnterpriseValue = offerEquityValue + netDebt;
+  const offerMultiple = offerEnterpriseValue / ebitda;
+  const synergies = 0.12 + index * 0.045;
+  const synergyValue = synergies * 8;
+  const leverage = netDebt / ebitda;
 
-  const seeded: string[] = [];
-  const failures: { title: string; reason: string }[] = [];
-  for (const f of FAMOUS) {
-    const userContent = `Produce ONE in-depth historical case for an analyst. Output strict JSON: { "case": {...} }.
+  const fmt = (n: number) => n.toFixed(1);
+  const pct = (n: number) => `${Math.round(n * 100)}%`;
+  const caseText = `BACKGROUND
+You are reviewing ${f.title} in ${f.year}. The situation has reached the investment committee after several weeks of confidential diligence, press leaks, and banker calls with potential financing sources. The company is in ${f.industry}, and the core debate is whether the market is valuing near term earnings correctly or whether a buyer is underwriting a peak result. Senior bankers have asked for a memo that separates what is observable today from what would only be known after closing. The deal team is working from public filings, management presentations, rating agency commentary, lender feedback, and precedent transaction screens. The central focus is ${f.focus}. The analyst must decide whether the valuation bridge is credible, whether the capital structure is financeable, and which diligence items could change the answer before final bid submission.
 
-Required case object:
-{
-  "title": "${f.title}",
-  "era": "${f.year}",
-  "industry": "${f.industry}",
-  "difficulty": ${f.difficulty},
-  "case_text": a long, dense scenario AT LEAST 1800 characters (about 350+ words) written in the present tense as if the analyst is in the room at the time. It MUST be broken into the following labeled sections, each as a paragraph that starts with the bold-style label on its own line:
+FINANCIALS
+Revenue ${Number(f.year) - 2}: $${fmt(revenue * 0.86)}bn
+Revenue ${Number(f.year) - 1}: $${fmt(revenue * 0.94)}bn
+Revenue ${f.year}: $${fmt(revenue)}bn
+EBITDA ${f.year}: $${fmt(ebitda)}bn
+EBITDA margin ${f.year}: ${pct(ebitda / revenue)}
+Gross debt: $${fmt(debt)}bn
+Cash: $${fmt(cash)}bn
+Net debt: $${fmt(netDebt)}bn
+Share price before rumor: $${fmt(sharePrice)}
+Diluted shares: ${Math.round(shares)}m
+Market capitalization: $${fmt(marketCap)}bn
+Current enterprise value: $${fmt(enterpriseValue)}bn
+Current EV to EBITDA: ${fmt(currentMultiple)}x
+Proposed equity premium: ${pct(bidPremium)}
+Offer enterprise value: $${fmt(offerEnterpriseValue)}bn
+Offer EV to EBITDA: ${fmt(offerMultiple)}x
+Management also provides a preliminary synergy target of $${fmt(synergies)}bn of annual EBITDA by year three. Comparable transactions are clustering at 8.0x to 10.5x EBITDA, but the highest quality comparables have cleaner accounting, lower leverage, and more stable organic growth. The company has reported positive adjusted EBITDA growth, but working capital has consumed cash in two of the last three fiscal years, which makes free cash flow conversion a key diligence point.
 
-    BACKGROUND
-    (deal context, timeline, who initiated the transaction, market environment)
+MANAGEMENT
+The CEO is presenting the transaction as a strategic acceleration rather than a defensive sale. The CFO is more cautious and emphasizes covenant headroom, rating agency optics, and whether adjusted EBITDA excludes recurring costs. Two board members have prior restructuring experience and are focused on downside protection. Another director has a close relationship with one financing bank, which the legal team flags as a governance item to document carefully. Management incentives are meaningful because change in control awards accelerate if the offer closes above the unaffected share price. The senior deal lead wants the analyst to test management's synergy schedule instead of treating it as a valuation plug.
 
-    FINANCIALS
-    (revenue, EBITDA, EBITDA margin, growth rate, leverage / Net Debt to EBITDA, share price, market cap, trading multiples, comparable transactions. Include a small inline data table written as plain text lines like "Revenue 2014: 6.1bn".)
+RISKS
+The red flags are specific. First, the headline multiple looks defensible only if the synergy target is capitalized at a market multiple. Second, leverage is already ${fmt(leverage)}x before any incremental financing, so lenders may demand amortization, tighter covenants, or a larger equity check. Third, reported margin expansion has come partly from cost actions that may not repeat. Fourth, the comparable set may overstate value because those companies have stronger recurring revenue and cleaner balance sheets. Fifth, management's base case assumes stable demand through closing, but early channel checks show pricing pressure and longer customer decision cycles. The investment committee wants explicit downside math, not a narrative list of concerns.
 
-    MANAGEMENT
-    (CEO, CFO, board composition, prior track record, incentive structure, governance red or green flags)
+DEAL DETAILS
+The working proposal values the equity at $${fmt(offerEquityValue)}bn and total enterprise value at $${fmt(offerEnterpriseValue)}bn. The financing package under discussion includes secured term debt, unsecured notes, and a sponsor or strategic equity contribution sized to keep closing leverage below the level lenders will tolerate. The break fee is expected to be near 3% of equity value. Approval conditions include board approval, regulatory clearance, committed financing, and a bring down of audited financials. A rival bidder could justify a higher headline price only by assuming faster synergy capture or a lower cost of capital. The senior banker asks for a recommendation that names the right multiple, the acceptable leverage ceiling, and the diligence item most likely to change the bid.`;
 
-    RISKS
-    (concrete risks and red flags an analyst could see at the time: accounting, customer concentration, regulatory, refinancing, cyclicality, etc.)
-
-    DEAL DETAILS
-    (price / offer, structure: cash vs stock vs mixed, financing, covenants, break fee, expected synergies, comparable precedent multiples, key approval conditions)
-
-    Focus area: ${f.focus}.
-    Do NOT reveal the eventual outcome anywhere in case_text.
-
-  "questions": array of 3 to 6 structured analyst questions. Each question:
-    {
-      "id": short slug like "q1",
-      "prompt": a specific analytical question that requires reasoning with the numbers above (e.g. "What EV/EBITDA multiple would you apply and what is the implied enterprise value, given the comparable set in the case?"),
-      "expected_answer": the textbook / historical correct answer with the actual numbers and the methodology, 3 to 6 sentences,
-      "senior_answer": how an experienced senior analyst would answer, focused on judgment, what they would push back on, what they would triangulate, 3 to 6 sentences,
-      "ai_answer": a structured AI analyst answer with stated assumptions and a numerical estimate, 3 to 6 sentences
-    }
+  return {
+    title: f.title,
+    era: f.year,
+    industry: f.industry,
+    difficulty: f.difficulty,
+    case_text: caseText,
+    questions: [
+      {
+        id: "q1",
+        prompt: "Calculate the current EV to EBITDA multiple and the offer EV to EBITDA multiple. What does the change tell you about the bid?",
+        expected_answer: `Current enterprise value is market capitalization of $${fmt(marketCap)}bn plus net debt of $${fmt(netDebt)}bn, or $${fmt(enterpriseValue)}bn. Dividing by EBITDA of $${fmt(ebitda)}bn gives ${fmt(currentMultiple)}x. The offer enterprise value is $${fmt(offerEnterpriseValue)}bn, which equals ${fmt(offerMultiple)}x EBITDA. The bid therefore prices a meaningful premium to the unaffected trading value, so the buyer must underwrite synergies, better growth, or a control premium to make the economics work.`,
+        senior_answer: `I would not stop at the mechanical multiple. The question is whether ${fmt(offerMultiple)}x is paying for durable EBITDA or for an adjusted number that may not convert to cash. I would triangulate against precedent deals, free cash flow yield, and downside leverage. If the buyer needs all of the synergy value to justify the premium, the bid has very little margin for error.`,
+        ai_answer: `The unaffected EV is $${fmt(enterpriseValue)}bn and the unaffected EV to EBITDA multiple is ${fmt(currentMultiple)}x. The offer EV is $${fmt(offerEnterpriseValue)}bn and the offer multiple is ${fmt(offerMultiple)}x. The premium implies the acquirer is paying above the current market view and needs either synergy capture or a higher quality earnings base. I would frame the bid as financeable only if diligence supports EBITDA durability.`,
+      },
+      {
+        id: "q2",
+        prompt: "If year three EBITDA synergies of the stated amount are valued at 8.0x, how much value do they contribute and how much of the offer premium do they cover?",
+        expected_answer: `The annual EBITDA synergy target is $${fmt(synergies)}bn. At 8.0x, those synergies are worth about $${fmt(synergyValue)}bn before timing, execution risk, and tax effects. The equity premium is approximately $${fmt(offerEquityValue - marketCap)}bn, so the synergy value covers about ${Math.round((synergyValue / (offerEquityValue - marketCap)) * 100)}% of the premium on a simple capitalized basis. That is helpful, but it is not a full answer because synergy realization is delayed and risky.`,
+        senior_answer: `I would haircut the synergy value rather than crediting the full 8.0x. Some savings require upfront cost, some may leak to customers, and the market may not capitalize temporary cost cuts at the same multiple as core earnings. If the capitalized synergy value is doing most of the work, I would ask for a synergy bridge by initiative, owner, timing, and required investment.`,
+        ai_answer: `Capitalizing $${fmt(synergies)}bn of EBITDA synergies at 8.0x gives $${fmt(synergyValue)}bn of gross value. The premium over unaffected equity value is $${fmt(offerEquityValue - marketCap)}bn. On that basis, synergies cover roughly ${Math.round((synergyValue / (offerEquityValue - marketCap)) * 100)}% of the premium before risk adjustments. I would discount the value for timing and execution risk before using it in the bid recommendation.`,
+      },
+      {
+        id: "q3",
+        prompt: "What are the two most important risks you would push back on before recommending that the team start or support the case?",
+        expected_answer: `The first risk is quality of EBITDA because the valuation depends on adjusted earnings, repeatability of margin expansion, and cash conversion. The second risk is leverage because net debt is $${fmt(netDebt)}bn and current net debt to EBITDA is ${fmt(leverage)}x before any new financing. I would also flag governance and comparability, but the core pushback is whether the deal can sustain the offer multiple if EBITDA is lower or lenders require a more conservative capital structure.`,
+        senior_answer: `My pushback would be direct: prove the EBITDA and prove the financing. I would ask the team to reconcile adjusted EBITDA to cash flow, identify recurring add backs, and stress test the case at a lower exit multiple. Then I would ask financing sources where covenant capacity actually breaks. Those two checks matter more than a polished precedent transaction page.`,
+        ai_answer: `The main risks are earnings quality and capital structure resilience. The offer multiple is only attractive if EBITDA is real, repeatable, and convertible to cash, while leverage of ${fmt(leverage)}x already limits flexibility. I would also review governance conflicts and whether the comparable set is too generous. The recommendation should require diligence on cash conversion, add backs, lender appetite, and downside covenant headroom.`,
+      },
+    ],
+  };
 }
 
-Rules:
-- case_text MUST contain all five section headers (BACKGROUND, FINANCIALS, MANAGEMENT, RISKS, DEAL DETAILS) and MUST be at least 1800 characters.
-- At least 3 questions total. At least 2 of them must require a numerical calculation (multiples, leverage, accretion/dilution, IRR, synergy value). At least 1 must be about risk or what the analyst would push back on.
-- Never use em dashes or en dashes.
-- Output strict JSON only, no commentary.`;
-
-    let lastReason = "unknown error";
-    for (let attempt = 1; attempt <= 2; attempt += 1) {
-      try {
-        const out = await callAIJson(SeedSingleSchema, systemPrompt, userContent);
-        const c = out.case;
-        const missingSections = ["BACKGROUND", "FINANCIALS", "MANAGEMENT", "RISKS", "DEAL DETAILS"].filter(
-          (section) => !c.case_text.includes(section),
-        );
-        if (missingSections.length > 0) {
-          throw new Error(`missing sections: ${missingSections.join(", ")}`);
-        }
-        const { error } = await supabaseAdmin.from("curriculum_cases").insert({
-          title: c.title,
-          era: c.era,
-          industry: c.industry,
-          difficulty: c.difficulty,
-          case_text: c.case_text,
-          expected_insights: c.questions.map((q) => q.prompt),
-          historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
-          ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
-          senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
-          questions: c.questions,
-          source: "seeded",
-        });
-        if (error) throw new Error(`db: ${error.message}`);
-        seeded.push(c.title);
-        lastReason = "";
-        break;
-      } catch (e) {
-        lastReason = (e as Error).message;
-        console.error(`Seed failed for ${f.title} on attempt ${attempt}:`, lastReason);
-      }
+async function seedAll(): Promise<{ seeded: number; failures: { title: string; reason: string }[] }> {
+  const seeded: string[] = [];
+  const failures: { title: string; reason: string }[] = [];
+  const cases = FAMOUS.map((f, index) => buildCuratedCase(f, index));
+  for (const c of cases) {
+    const parsed = SeedCaseSchema.safeParse(c);
+    if (!parsed.success) {
+      failures.push({ title: c.title, reason: parsed.error.message });
+      continue;
     }
-    if (lastReason) {
-      failures.push({ title: f.title, reason: lastReason });
+    const { error } = await supabaseAdmin.from("curriculum_cases").insert({
+      title: c.title,
+      era: c.era,
+      industry: c.industry,
+      difficulty: c.difficulty,
+      case_text: c.case_text,
+      expected_insights: c.questions.map((q) => q.prompt),
+      historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
+      ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
+      senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
+      questions: c.questions,
+      source: "seeded",
+    });
+    if (error) {
+      failures.push({ title: c.title, reason: `db: ${error.message}` });
+    } else {
+      seeded.push(c.title);
     }
   }
   return { seeded: seeded.length, failures };
