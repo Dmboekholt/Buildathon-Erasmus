@@ -91,6 +91,125 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_attempts: {
+        Row: {
+          accuracy_score: number
+          alignment_ai: number
+          alignment_historical: number
+          alignment_senior: number
+          analyst_id: string
+          analyst_level: number
+          case_id: string
+          created_at: string
+          feedback: string | null
+          id: string
+          skill_indicators: Json
+          written_insight: string
+        }
+        Insert: {
+          accuracy_score?: number
+          alignment_ai?: number
+          alignment_historical?: number
+          alignment_senior?: number
+          analyst_id?: string
+          analyst_level?: number
+          case_id: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          skill_indicators?: Json
+          written_insight: string
+        }
+        Update: {
+          accuracy_score?: number
+          alignment_ai?: number
+          alignment_historical?: number
+          alignment_senior?: number
+          analyst_id?: string
+          analyst_level?: number
+          case_id?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          skill_indicators?: Json
+          written_insight?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_attempts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_cases: {
+        Row: {
+          ai_answer: string
+          case_text: string
+          created_at: string
+          difficulty: number
+          era: string | null
+          expected_insights: string[]
+          historical_answer: string
+          id: string
+          industry: string | null
+          senior_reasoning: string
+          source: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_answer: string
+          case_text: string
+          created_at?: string
+          difficulty?: number
+          era?: string | null
+          expected_insights?: string[]
+          historical_answer: string
+          id?: string
+          industry?: string | null
+          senior_reasoning: string
+          source?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_answer?: string
+          case_text?: string
+          created_at?: string
+          difficulty?: number
+          era?: string | null
+          expected_insights?: string[]
+          historical_answer?: string
+          id?: string
+          industry?: string | null
+          senior_reasoning?: string
+          source?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      curriculum_progress: {
+        Row: {
+          analyst_id: string
+          level: number
+          updated_at: string
+        }
+        Insert: {
+          analyst_id?: string
+          level?: number
+          updated_at?: string
+        }
+        Update: {
+          analyst_id?: string
+          level?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       debriefs: {
         Row: {
           case_id: string | null
