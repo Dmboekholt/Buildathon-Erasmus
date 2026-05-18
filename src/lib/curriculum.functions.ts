@@ -91,28 +91,41 @@ const FAMOUS = [
   { title: "General Electric conglomerate discount", year: "2017", industry: "Industrials", difficulty: 5, focus: "sum-of-the-parts valuation, GE Capital insurance reserves, pension underfunding, dividend cover" },
 ];
 
-export const seedCurriculumIfEmpty = createServerFn({ method: "POST" }).handler(
-  async () => {
-    const { count, error: cErr } = await supabaseAdmin
-      .from("curriculum_cases")
-      .select("id", { count: "exact", head: true });
-    if (cErr) throw new Error(cErr.message);
-    if ((count ?? 0) > 0) return { seeded: 0 };
+async function seedAll(): Promise<{ seeded: number; failures: { title: string; reason: string }[] }> {
+  const systemPrompt = `You are a curriculum designer for investment banking and equity research analysts. You write long, dense, numerically rich historical financial cases that read like a real deal memo. Output strict JSON only. Never use em dashes or en dashes. Use periods, commas, or colons instead.`;
 
-    const systemPrompt = `You are a curriculum designer for investment banking and equity research analysts. You write long, dense, numerically rich historical financial cases. Output strict JSON only. Never use em dashes or en dashes. Use periods, commas, or colons instead.`;
+  const seeded: string[] = [];
+  const failures: { title: string; reason: string }[] = [];
+  for (const f of FAMOUS) {
+    const userContent = `Produce ONE in-depth historical case for an analyst. Output strict JSON: { "case": {...} }.
 
-    const seeded: { title: string }[] = [];
-    for (const f of FAMOUS) {
-      const userContent = `Produce ONE in-depth historical case for an analyst. Output strict JSON: { "case": {...} }.
-
-Case object:
+Required case object:
 {
   "title": "${f.title}",
   "era": "${f.year}",
   "industry": "${f.industry}",
   "difficulty": ${f.difficulty},
-  "case_text": a long, dense scenario of AT LEAST 800 words, written in the present tense as if the analyst is in the room at the time. Include concrete numbers: revenue, EBITDA, multiples, leverage, share price, market cap, growth rates, comparable transactions. Include at least one small data table written in plain text (lines like "Revenue 2014: 6.1bn"). Do NOT reveal the eventual outcome. Focus area: ${f.focus}.
-  "questions": array of 4 to 6 structured analyst questions. Each question:
+  "case_text": a long, dense scenario AT LEAST 1800 characters (about 350+ words) written in the present tense as if the analyst is in the room at the time. It MUST be broken into the following labeled sections, each as a paragraph that starts with the bold-style label on its own line:
+
+    BACKGROUND
+    (deal context, timeline, who initiated the transaction, market environment)
+
+    FINANCIALS
+    (revenue, EBITDA, EBITDA margin, growth rate, leverage / Net Debt to EBITDA, share price, market cap, trading multiples, comparable transactions. Include a small inline data table written as plain text lines like "Revenue 2014: 6.1bn".)
+
+    MANAGEMENT
+    (CEO, CFO, board composition, prior track record, incentive structure, governance red or green flags)
+
+    RISKS
+    (concrete risks and red flags an analyst could see at the time: accounting, customer concentration, regulatory, refinancing, cyclicality, etc.)
+
+    DEAL DETAILS
+    (price / offer, structure: cash vs stock vs mixed, financing, covenants, break fee, expected synergies, comparable precedent multiples, key approval conditions)
+
+    Focus area: ${f.focus}.
+    Do NOT reveal the eventual outcome anywhere in case_text.
+
+  "questions": array of 3 to 6 structured analyst questions. Each question:
     {
       "id": short slug like "q1",
       "prompt": a specific analytical question that requires reasoning with the numbers above (e.g. "What EV/EBITDA multiple would you apply and what is the implied enterprise value, given the comparable set in the case?"),
@@ -120,36 +133,61 @@ Case object:
       "senior_answer": how an experienced senior analyst would answer, focused on judgment, what they would push back on, what they would triangulate, 3 to 6 sentences,
       "ai_answer": a structured AI analyst answer with stated assumptions and a numerical estimate, 3 to 6 sentences
     }
+}
 
 Rules:
-- Questions must require multi-step reasoning, not trivia.
-- At least 2 questions must involve a numerical calculation (multiples, leverage, accretion/dilution, IRR, synergy value).
-- At least 1 question must be about risk or what the analyst would push back on.
+- case_text MUST contain all five section headers (BACKGROUND, FINANCIALS, MANAGEMENT, RISKS, DEAL DETAILS) and MUST be at least 1800 characters.
+- At least 3 questions total. At least 2 of them must require a numerical calculation (multiples, leverage, accretion/dilution, IRR, synergy value). At least 1 must be about risk or what the analyst would push back on.
 - Never use em dashes or en dashes.
-- Output strict JSON only.`;
+- Output strict JSON only, no commentary.`;
 
-      try {
-        const out = await callAIJson(SeedSingleSchema, systemPrompt, userContent);
-        const c = out.case;
-        const { error } = await supabaseAdmin.from("curriculum_cases").insert({
-          title: c.title,
-          era: c.era,
-          industry: c.industry,
-          difficulty: c.difficulty,
-          case_text: c.case_text,
-          expected_insights: c.questions.map((q) => q.prompt),
-          historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
-          ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
-          senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
-          questions: c.questions,
-          source: "seeded",
-        });
-        if (!error) seeded.push({ title: c.title });
-      } catch (e) {
-        console.error(`Seed failed for ${f.title}:`, (e as Error).message);
+    try {
+      const out = await callAIJson(SeedSingleSchema, systemPrompt, userContent);
+      const c = out.case;
+      const { error } = await supabaseAdmin.from("curriculum_cases").insert({
+        title: c.title,
+        era: c.era,
+        industry: c.industry,
+        difficulty: c.difficulty,
+        case_text: c.case_text,
+        expected_insights: c.questions.map((q) => q.prompt),
+        historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
+        ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
+        senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
+        questions: c.questions,
+        source: "seeded",
+      });
+      if (error) {
+        failures.push({ title: f.title, reason: `db: ${error.message}` });
+      } else {
+        seeded.push(c.title);
       }
+    } catch (e) {
+      const reason = (e as Error).message;
+      console.error(`Seed failed for ${f.title}:`, reason);
+      failures.push({ title: f.title, reason });
     }
-    return { seeded: seeded.length };
+  }
+  return { seeded: seeded.length, failures };
+}
+
+export const seedCurriculumIfEmpty = createServerFn({ method: "POST" }).handler(
+  async () => {
+    const { count, error: cErr } = await supabaseAdmin
+      .from("curriculum_cases")
+      .select("id", { count: "exact", head: true })
+      .eq("source", "seeded");
+    if (cErr) throw new Error(cErr.message);
+    if ((count ?? 0) > 0) return { seeded: 0, failures: [] };
+    return seedAll();
+  },
+);
+
+export const forceReseedCurriculum = createServerFn({ method: "POST" }).handler(
+  async () => {
+    await supabaseAdmin.from("curriculum_attempts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    await supabaseAdmin.from("curriculum_cases").delete().eq("source", "seeded");
+    return seedAll();
   },
 );
 
