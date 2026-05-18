@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { getElevenLabsConversationToken } from "@/lib/elevenlabs.functions";
+
+const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined;
 
 type Props = {
   analystWork: unknown;
