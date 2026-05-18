@@ -130,12 +130,12 @@ function DashboardPage() {
                       <h3 className="text-section font-medium text-foreground">
                         {c.title}
                       </h3>
-                      {c.mode && (
+                      {c.status && (
                         <Badge
                           variant="outline"
                           className="shrink-0 rounded-pill border-border bg-background px-2.5 py-0.5 text-caption font-normal text-muted-foreground"
                         >
-                          {c.mode}
+                          {c.status}
                         </Badge>
                       )}
                     </div>
@@ -144,9 +144,9 @@ function DashboardPage() {
                     </div>
                     <div className="mt-3 flex items-center justify-between">
                       <span className="text-caption text-muted-foreground">
-                        Level{" "}
+                        Priority{" "}
                         <span className="font-mono text-foreground">
-                          {c.level}
+                          {c.priority}
                         </span>
                       </span>
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
