@@ -22,16 +22,23 @@ function ChallengePage() {
   const qc = useQueryClient();
   const fetchList = useServerFn(listCases);
   const seed = useServerFn(seedCurriculumIfEmpty);
+  const forceReseed = useServerFn(forceReseedCurriculum);
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const [seedNotice, setSeedNotice] = useState<string | null>(null);
 
-  const { data: cases, isLoading, refetch } = useQuery({
+  const { data: cases, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["curriculum-cases"],
     queryFn: async () => {
       const first = await fetchList();
       if (!first || first.length === 0) {
-        await seed();
+        const res = await seed();
+        if (res.failures && res.failures.length > 0) {
+          setSeedNotice(
+            `Seed completed with ${res.seeded} successes and ${res.failures.length} failures. First failure: ${res.failures[0].reason}`,
+          );
+        }
         return fetchList();
       }
       return first;
@@ -68,6 +75,14 @@ function ChallengePage() {
         caseId={activeCaseId}
         onExit={() => setActiveCaseId(null)}
         onSubmitted={(r) => setResult(r)}
+        onReseed={async () => {
+          setActiveCaseId(null);
+          const res = await forceReseed();
+          setSeedNotice(
+            `Re-seed completed with ${res.seeded} successes and ${res.failures.length} failures.${res.failures[0] ? ` First failure: ${res.failures[0].reason}` : ""}`,
+          );
+          await refetch();
+        }}
       />
     );
   }
@@ -75,12 +90,18 @@ function ChallengePage() {
   return (
     <BrowsePanel
       cases={cases ?? []}
+      busy={isFetching}
+      seedNotice={seedNotice}
       onStart={(id) => {
         setResult(null);
         setActiveCaseId(id);
       }}
       onReseed={async () => {
-        await seed();
+        setSeedNotice(null);
+        const res = await forceReseed();
+        setSeedNotice(
+          `Re-seed completed with ${res.seeded} successes and ${res.failures.length} failures.${res.failures[0] ? ` First failure: ${res.failures[0].reason}` : ""}`,
+        );
         await refetch();
       }}
     />
@@ -89,10 +110,14 @@ function ChallengePage() {
 
 function BrowsePanel({
   cases,
+  busy,
+  seedNotice,
   onStart,
   onReseed,
 }: {
   cases: { id: string; title: string; era: string | null; industry: string | null; difficulty: number }[];
+  busy: boolean;
+  seedNotice: string | null;
   onStart: (id: string) => void;
   onReseed: () => void;
 }) {
@@ -100,12 +125,15 @@ function BrowsePanel({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-section font-medium text-foreground">Available cases</h2>
-        {cases.length === 0 && (
-          <Button variant="outline" className="rounded-pill" onClick={onReseed}>
-            Generate case library
-          </Button>
-        )}
+        <Button variant="outline" className="rounded-pill" onClick={onReseed} disabled={busy}>
+          {busy ? "Generating." : cases.length === 0 ? "Generate case library" : "Re-seed library"}
+        </Button>
       </div>
+      {seedNotice && (
+        <div className="rounded-md border border-border bg-card p-3 text-caption text-muted-foreground">
+          {seedNotice}
+        </div>
+      )}
       {cases.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-body text-muted-foreground">
           No cases yet. Generate the case library to get started.
