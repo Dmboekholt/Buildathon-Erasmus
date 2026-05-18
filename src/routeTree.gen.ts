@@ -11,11 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppManagerRouteImport } from './routes/_app.manager'
 import { Route as AppCurriculumRouteImport } from './routes/_app.curriculum'
 import { Route as AppCurriculumIndexRouteImport } from './routes/_app.curriculum.index'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
-import { Route as AppCurriculumUploadRouteImport } from './routes/_app.curriculum.upload'
-import { Route as AppCurriculumManagerRouteImport } from './routes/_app.curriculum.manager'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 
 const AppRoute = AppRouteImport.update({
@@ -25,6 +24,11 @@ const AppRoute = AppRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppManagerRoute = AppManagerRouteImport.update({
+  id: '/manager',
+  path: '/manager',
   getParentRoute: () => AppRoute,
 } as any)
 const AppCurriculumRoute = AppCurriculumRouteImport.update({
@@ -42,16 +46,6 @@ const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   path: '/cases/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppCurriculumUploadRoute = AppCurriculumUploadRouteImport.update({
-  id: '/upload',
-  path: '/upload',
-  getParentRoute: () => AppCurriculumRoute,
-} as any)
-const AppCurriculumManagerRoute = AppCurriculumManagerRouteImport.update({
-  id: '/manager',
-  path: '/manager',
-  getParentRoute: () => AppCurriculumRoute,
-} as any)
 const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
   id: '/cases/$caseId',
   path: '/cases/$caseId',
@@ -61,17 +55,15 @@ const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/curriculum': typeof AppCurriculumRouteWithChildren
+  '/manager': typeof AppManagerRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
-  '/curriculum/manager': typeof AppCurriculumManagerRoute
-  '/curriculum/upload': typeof AppCurriculumUploadRoute
   '/cases/': typeof AppCasesIndexRoute
   '/curriculum/': typeof AppCurriculumIndexRoute
 }
 export interface FileRoutesByTo {
+  '/manager': typeof AppManagerRoute
   '/': typeof AppIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
-  '/curriculum/manager': typeof AppCurriculumManagerRoute
-  '/curriculum/upload': typeof AppCurriculumUploadRoute
   '/cases': typeof AppCasesIndexRoute
   '/curriculum': typeof AppCurriculumIndexRoute
 }
@@ -79,10 +71,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/curriculum': typeof AppCurriculumRouteWithChildren
+  '/_app/manager': typeof AppManagerRoute
   '/_app/': typeof AppIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
-  '/_app/curriculum/manager': typeof AppCurriculumManagerRoute
-  '/_app/curriculum/upload': typeof AppCurriculumUploadRoute
   '/_app/cases/': typeof AppCasesIndexRoute
   '/_app/curriculum/': typeof AppCurriculumIndexRoute
 }
@@ -91,27 +82,19 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/curriculum'
+    | '/manager'
     | '/cases/$caseId'
-    | '/curriculum/manager'
-    | '/curriculum/upload'
     | '/cases/'
     | '/curriculum/'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/cases/$caseId'
-    | '/curriculum/manager'
-    | '/curriculum/upload'
-    | '/cases'
-    | '/curriculum'
+  to: '/manager' | '/' | '/cases/$caseId' | '/cases' | '/curriculum'
   id:
     | '__root__'
     | '/_app'
     | '/_app/curriculum'
+    | '/_app/manager'
     | '/_app/'
     | '/_app/cases/$caseId'
-    | '/_app/curriculum/manager'
-    | '/_app/curriculum/upload'
     | '/_app/cases/'
     | '/_app/curriculum/'
   fileRoutesById: FileRoutesById
@@ -136,6 +119,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/manager': {
+      id: '/_app/manager'
+      path: '/manager'
+      fullPath: '/manager'
+      preLoaderRoute: typeof AppManagerRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/curriculum': {
       id: '/_app/curriculum'
       path: '/curriculum'
@@ -157,20 +147,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppCasesIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/curriculum/upload': {
-      id: '/_app/curriculum/upload'
-      path: '/upload'
-      fullPath: '/curriculum/upload'
-      preLoaderRoute: typeof AppCurriculumUploadRouteImport
-      parentRoute: typeof AppCurriculumRoute
-    }
-    '/_app/curriculum/manager': {
-      id: '/_app/curriculum/manager'
-      path: '/manager'
-      fullPath: '/curriculum/manager'
-      preLoaderRoute: typeof AppCurriculumManagerRouteImport
-      parentRoute: typeof AppCurriculumRoute
-    }
     '/_app/cases/$caseId': {
       id: '/_app/cases/$caseId'
       path: '/cases/$caseId'
@@ -182,14 +158,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppCurriculumRouteChildren {
-  AppCurriculumManagerRoute: typeof AppCurriculumManagerRoute
-  AppCurriculumUploadRoute: typeof AppCurriculumUploadRoute
   AppCurriculumIndexRoute: typeof AppCurriculumIndexRoute
 }
 
 const AppCurriculumRouteChildren: AppCurriculumRouteChildren = {
-  AppCurriculumManagerRoute: AppCurriculumManagerRoute,
-  AppCurriculumUploadRoute: AppCurriculumUploadRoute,
   AppCurriculumIndexRoute: AppCurriculumIndexRoute,
 }
 
@@ -199,6 +171,7 @@ const AppCurriculumRouteWithChildren = AppCurriculumRoute._addFileChildren(
 
 interface AppRouteChildren {
   AppCurriculumRoute: typeof AppCurriculumRouteWithChildren
+  AppManagerRoute: typeof AppManagerRoute
   AppIndexRoute: typeof AppIndexRoute
   AppCasesCaseIdRoute: typeof AppCasesCaseIdRoute
   AppCasesIndexRoute: typeof AppCasesIndexRoute
@@ -206,6 +179,7 @@ interface AppRouteChildren {
 
 const AppRouteChildren: AppRouteChildren = {
   AppCurriculumRoute: AppCurriculumRouteWithChildren,
+  AppManagerRoute: AppManagerRoute,
   AppIndexRoute: AppIndexRoute,
   AppCasesCaseIdRoute: AppCasesCaseIdRoute,
   AppCasesIndexRoute: AppCasesIndexRoute,
@@ -219,3 +193,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
