@@ -38,6 +38,7 @@ async function callAIJson<T>(
       },
       body: JSON.stringify({
         model: MODEL,
+        max_tokens: 8192,
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userContent },
@@ -57,7 +58,7 @@ async function callAIJson<T>(
   try {
     return schema.parse(JSON.parse(raw));
   } catch (e) {
-    throw new Error(`Failed to parse AI response: ${(e as Error).message}`);
+    throw new Error(`Failed to parse AI response: ${(e as Error).message}. Raw response: ${raw.slice(0, 300)}`);
   }
 }
 
@@ -141,31 +142,41 @@ Rules:
 - Never use em dashes or en dashes.
 - Output strict JSON only, no commentary.`;
 
-    try {
-      const out = await callAIJson(SeedSingleSchema, systemPrompt, userContent);
-      const c = out.case;
-      const { error } = await supabaseAdmin.from("curriculum_cases").insert({
-        title: c.title,
-        era: c.era,
-        industry: c.industry,
-        difficulty: c.difficulty,
-        case_text: c.case_text,
-        expected_insights: c.questions.map((q) => q.prompt),
-        historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
-        ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
-        senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
-        questions: c.questions,
-        source: "seeded",
-      });
-      if (error) {
-        failures.push({ title: f.title, reason: `db: ${error.message}` });
-      } else {
+    let lastReason = "unknown error";
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const out = await callAIJson(SeedSingleSchema, systemPrompt, userContent);
+        const c = out.case;
+        const missingSections = ["BACKGROUND", "FINANCIALS", "MANAGEMENT", "RISKS", "DEAL DETAILS"].filter(
+          (section) => !c.case_text.includes(section),
+        );
+        if (missingSections.length > 0) {
+          throw new Error(`missing sections: ${missingSections.join(", ")}`);
+        }
+        const { error } = await supabaseAdmin.from("curriculum_cases").insert({
+          title: c.title,
+          era: c.era,
+          industry: c.industry,
+          difficulty: c.difficulty,
+          case_text: c.case_text,
+          expected_insights: c.questions.map((q) => q.prompt),
+          historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
+          ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
+          senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
+          questions: c.questions,
+          source: "seeded",
+        });
+        if (error) throw new Error(`db: ${error.message}`);
         seeded.push(c.title);
+        lastReason = "";
+        break;
+      } catch (e) {
+        lastReason = (e as Error).message;
+        console.error(`Seed failed for ${f.title} on attempt ${attempt}:`, lastReason);
       }
-    } catch (e) {
-      const reason = (e as Error).message;
-      console.error(`Seed failed for ${f.title}:`, reason);
-      failures.push({ title: f.title, reason });
+    }
+    if (lastReason) {
+      failures.push({ title: f.title, reason: lastReason });
     }
   }
   return { seeded: seeded.length, failures };
