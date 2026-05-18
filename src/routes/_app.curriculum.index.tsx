@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
-  pickCaseForLevel,
+  listCases,
+  getCase,
   submitAttempt,
   seedCurriculumIfEmpty,
 } from "@/lib/curriculum.functions";
@@ -14,129 +15,256 @@ export const Route = createFileRoute("/_app/curriculum/")({
   component: ChallengePage,
 });
 
-type Scored = Awaited<ReturnType<typeof submitAttempt>>;
+type SubmitResult = Awaited<ReturnType<typeof submitAttempt>>;
 
 function ChallengePage() {
   const qc = useQueryClient();
-  const fetchCase = useServerFn(pickCaseForLevel);
-  const submit = useServerFn(submitAttempt);
+  const fetchList = useServerFn(listCases);
   const seed = useServerFn(seedCurriculumIfEmpty);
 
-  const [insight, setInsight] = useState("");
-  const [result, setResult] = useState<Scored | null>(null);
-  const [reloadKey, setReloadKey] = useState(0);
+  const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+  const [result, setResult] = useState<SubmitResult | null>(null);
 
-  const { data: challenge, isLoading } = useQuery({
-    queryKey: ["curriculum-case", reloadKey],
+  const { data: cases, isLoading, refetch } = useQuery({
+    queryKey: ["curriculum-cases"],
     queryFn: async () => {
-      const first = await fetchCase();
-      if (!first) {
+      const first = await fetchList();
+      if (!first || first.length === 0) {
         await seed();
-        return fetchCase();
+        return fetchList();
       }
       return first;
     },
   });
 
-  useEffect(() => {
-    setInsight("");
-    setResult(null);
-  }, [reloadKey]);
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border border-border bg-card p-8 text-body text-muted-foreground">
+        Preparing your case library. The first load can take a moment while cases are generated.
+      </div>
+    );
+  }
+
+  if (result && activeCaseId) {
+    return (
+      <ReviewPanel
+        result={result}
+        onAnother={() => {
+          setResult(null);
+          setActiveCaseId(null);
+          qc.invalidateQueries({ queryKey: ["curriculum-progress"] });
+        }}
+        onRetry={() => {
+          setResult(null);
+        }}
+      />
+    );
+  }
+
+  if (activeCaseId) {
+    return (
+      <InProgressCase
+        caseId={activeCaseId}
+        onExit={() => setActiveCaseId(null)}
+        onSubmitted={(r) => setResult(r)}
+      />
+    );
+  }
+
+  return (
+    <BrowsePanel
+      cases={cases ?? []}
+      onStart={(id) => {
+        setResult(null);
+        setActiveCaseId(id);
+      }}
+      onReseed={async () => {
+        await seed();
+        await refetch();
+      }}
+    />
+  );
+}
+
+function BrowsePanel({
+  cases,
+  onStart,
+  onReseed,
+}: {
+  cases: { id: string; title: string; era: string | null; industry: string | null; difficulty: number }[];
+  onStart: (id: string) => void;
+  onReseed: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-section font-medium text-foreground">Available cases</h2>
+        {cases.length === 0 && (
+          <Button variant="outline" className="rounded-pill" onClick={onReseed}>
+            Generate case library
+          </Button>
+        )}
+      </div>
+      {cases.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-border bg-card p-12 text-center text-body text-muted-foreground">
+          No cases yet. Generate the case library to get started.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {cases.map((c) => (
+            <article
+              key={c.id}
+              className="flex flex-col gap-3 rounded-lg border border-border bg-card p-6"
+            >
+              <div className="font-mono text-caption text-muted-foreground">
+                {c.era ?? "n.d."} . {c.industry ?? "Finance"} . difficulty {c.difficulty}/10
+              </div>
+              <h3 className="text-section font-medium text-foreground">{c.title}</h3>
+              <div className="mt-auto flex items-center justify-between pt-2">
+                <Badge variant="outline" className="rounded-pill font-mono text-caption">
+                  Long-form case
+                </Badge>
+                <Button className="rounded-pill" onClick={() => onStart(c.id)}>
+                  Start case
+                </Button>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InProgressCase({
+  caseId,
+  onExit,
+  onSubmitted,
+}: {
+  caseId: string;
+  onExit: () => void;
+  onSubmitted: (r: SubmitResult) => void;
+}) {
+  const fetchCase = useServerFn(getCase);
+  const submit = useServerFn(submitAttempt);
+  const qc = useQueryClient();
+
+  const { data: c, isLoading } = useQuery({
+    queryKey: ["curriculum-case", caseId],
+    queryFn: () => fetchCase({ data: { caseId } }),
+  });
+
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+
+  const allAnswered = useMemo(() => {
+    if (!c) return false;
+    return c.questions.every((q) => (answers[q.id] ?? "").trim().length > 0);
+  }, [c, answers]);
 
   const mut = useMutation({
-    mutationFn: (text: string) =>
-      submit({ data: { caseId: challenge!.id, writtenInsight: text } }),
+    mutationFn: () => submit({ data: { caseId, answers } }),
     onSuccess: (r) => {
-      setResult(r);
+      onSubmitted(r);
       qc.invalidateQueries({ queryKey: ["curriculum-progress"] });
       qc.invalidateQueries({ queryKey: ["curriculum-attempts"] });
     },
   });
 
-  if (isLoading || !challenge) {
+  if (isLoading || !c) {
     return (
       <div className="rounded-lg border border-border bg-card p-8 text-body text-muted-foreground">
-        Preparing your case library. This can take a moment on first load.
+        Loading case.
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onExit}
+          className="text-caption text-muted-foreground hover:text-foreground"
+        >
+          ← Back to case list
+        </button>
+        <Badge variant="outline" className="rounded-pill font-mono text-caption">
+          {c.questions.length} questions
+        </Badge>
+      </div>
+
       <article className="rounded-lg border border-border bg-card p-7">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <div className="font-mono text-caption text-muted-foreground">
-              {challenge.era} . {challenge.industry} . difficulty {challenge.difficulty}/10
-            </div>
-            <h2 className="mt-1 text-section font-medium text-foreground">
-              {challenge.title}
-            </h2>
-          </div>
-          <Badge variant="outline" className="rounded-pill font-mono text-caption">
-            {challenge.expected_insight_count} key insights expected
-          </Badge>
+        <div className="font-mono text-caption text-muted-foreground">
+          {c.era ?? "n.d."} . {c.industry ?? "Finance"} . difficulty {c.difficulty}/10
         </div>
-        <p className="whitespace-pre-wrap text-body text-foreground/90">
-          {challenge.case_text}
-        </p>
+        <h2 className="mt-1 text-section font-medium text-foreground">{c.title}</h2>
+        <div className="mt-5 whitespace-pre-wrap text-body leading-relaxed text-foreground/90">
+          {c.case_text}
+        </div>
       </article>
 
-      <section className="rounded-lg border border-border bg-card p-7">
-        <label htmlFor="insight" className="text-body font-medium text-foreground">
-          Your insight
-        </label>
-        <p className="mb-3 text-caption text-muted-foreground">
-          What do you see. What is the risk. What would you do.
-        </p>
-        <textarea
-          id="insight"
-          value={insight}
-          onChange={(e) => setInsight(e.target.value)}
-          disabled={mut.isPending || !!result}
-          rows={8}
-          className="w-full resize-y rounded-md border border-input bg-background p-3 text-body text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
-          placeholder="Write a short structured answer. Aim for the signal a senior would catch."
-        />
-        <div className="mt-4 flex items-center justify-between">
-          <div className="text-caption text-muted-foreground">
-            {mut.isPending ? "Scoring your answer." : result ? "Scored." : `${insight.length} characters`}
+      <section className="space-y-5">
+        <h3 className="text-section font-medium text-foreground">Questions</h3>
+        {c.questions.map((q, idx) => (
+          <div key={q.id} className="rounded-lg border border-border bg-card p-6">
+            <div className="mb-3 flex items-baseline gap-3">
+              <span className="font-mono text-caption text-muted-foreground">
+                Q{idx + 1}
+              </span>
+              <p className="text-body font-medium text-foreground">{q.prompt}</p>
+            </div>
+            <textarea
+              value={answers[q.id] ?? ""}
+              onChange={(e) =>
+                setAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
+              }
+              disabled={mut.isPending}
+              rows={5}
+              className="w-full resize-y rounded-md border border-input bg-background p-3 text-body text-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-60"
+              placeholder="Write your answer. Show your reasoning and any numbers you use."
+            />
           </div>
-          {!result ? (
-            <Button
-              disabled={!insight.trim() || mut.isPending}
-              onClick={() => mut.mutate(insight.trim())}
-              className="rounded-pill"
-            >
-              {mut.isPending ? "Scoring." : "Check my answer"}
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              className="rounded-pill"
-              onClick={() => setReloadKey((k) => k + 1)}
-            >
-              Next case
-            </Button>
-          )}
-        </div>
-        {mut.isError && (
-          <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-caption text-destructive">
-            {(mut.error as Error).message}
-          </div>
-        )}
+        ))}
       </section>
 
-      {result && <ResultPanel result={result} />}
+      <div className="sticky bottom-4 flex items-center justify-between rounded-lg border border-border bg-card p-4 shadow-lg">
+        <div className="text-caption text-muted-foreground">
+          {mut.isPending
+            ? "Scoring your answers."
+            : allAnswered
+              ? "All questions answered."
+              : `Answer all ${c.questions.length} questions to check.`}
+        </div>
+        <Button
+          disabled={!allAnswered || mut.isPending}
+          onClick={() => mut.mutate()}
+          className="rounded-pill"
+        >
+          {mut.isPending ? "Checking." : "Check my answers"}
+        </Button>
+      </div>
+
+      {mut.isError && (
+        <div className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-caption text-destructive">
+          {(mut.error as Error).message}
+        </div>
+      )}
     </div>
   );
 }
 
-function ResultPanel({ result }: { result: Scored }) {
+function ReviewPanel({
+  result,
+  onAnother,
+  onRetry,
+}: {
+  result: SubmitResult;
+  onAnother: () => void;
+  onRetry: () => void;
+}) {
   const s = result.scored;
   const bars = [
     { label: "Accuracy", value: s.accuracy_score },
-    { label: "vs Historical", value: s.alignment_historical },
+    { label: "vs Expected", value: s.alignment_historical },
     { label: "vs AI answer", value: s.alignment_ai },
     { label: "vs Senior reasoning", value: s.alignment_senior },
   ];
@@ -145,10 +273,23 @@ function ResultPanel({ result }: { result: Scored }) {
     { label: "Risk awareness", value: s.skill_indicators.risk_awareness },
     { label: "Pattern recognition", value: s.skill_indicators.pattern_recognition },
   ];
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-border bg-card p-7">
-        <h3 className="mb-4 text-section font-medium text-foreground">Scoring</h3>
+        <div className="mb-4 flex items-baseline justify-between">
+          <h3 className="text-section font-medium text-foreground">
+            Review: {result.reveal.title}
+          </h3>
+          <div className="flex gap-2">
+            <Button variant="outline" className="rounded-pill" onClick={onRetry}>
+              Retry this case
+            </Button>
+            <Button className="rounded-pill" onClick={onAnother}>
+              Try another case
+            </Button>
+          </div>
+        </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {bars.map((b) => (
             <div key={b.label}>
@@ -184,31 +325,57 @@ function ResultPanel({ result }: { result: Scored }) {
         </p>
       </section>
 
-      <section className="grid grid-cols-1 gap-5 md:grid-cols-3">
-        <RevealCard label="Historical answer" body={result.reveal.historical_answer} />
-        <RevealCard label="AI answer" body={result.reveal.ai_answer} />
-        <RevealCard label="Senior reasoning" body={result.reveal.senior_reasoning} />
-      </section>
-
-      <section className="rounded-lg border border-border bg-card p-6">
-        <div className="mb-2 font-mono text-caption text-muted-foreground">
-          Key insights to look for
-        </div>
-        <ul className="list-disc space-y-1 pl-5 text-body text-foreground/90">
-          {result.reveal.expected_insights.map((i, idx) => (
-            <li key={idx}>{i}</li>
-          ))}
-        </ul>
-      </section>
+      <div className="space-y-5">
+        {result.reveal.questions.map((q, idx) => (
+          <article key={q.id} className="rounded-lg border border-border bg-card p-6">
+            <div className="mb-4 flex items-baseline justify-between gap-3">
+              <div className="flex items-baseline gap-3">
+                <span className="font-mono text-caption text-muted-foreground">
+                  Q{idx + 1}
+                </span>
+                <p className="text-body font-medium text-foreground">{q.prompt}</p>
+              </div>
+              <Badge variant="outline" className="rounded-pill font-mono text-caption">
+                {q.score}/100
+              </Badge>
+            </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <AnswerBlock label="Your answer" body={q.analyst_answer} highlight />
+              <AnswerBlock label="Expected" body={q.expected_answer} />
+              <AnswerBlock label="Senior" body={q.senior_answer} />
+              <AnswerBlock label="AI" body={q.ai_answer} />
+            </div>
+            {q.feedback && (
+              <p className="mt-4 border-t border-border pt-4 text-caption text-muted-foreground">
+                {q.feedback}
+              </p>
+            )}
+          </article>
+        ))}
+      </div>
     </div>
   );
 }
 
-function RevealCard({ label, body }: { label: string; body: string }) {
+function AnswerBlock({
+  label,
+  body,
+  highlight,
+}: {
+  label: string;
+  body: string;
+  highlight?: boolean;
+}) {
   return (
-    <article className="flex flex-col gap-2 rounded-lg border border-border bg-card p-5">
+    <div
+      className={`flex flex-col gap-2 rounded-md border p-4 ${
+        highlight ? "border-foreground/40 bg-background" : "border-border bg-background/60"
+      }`}
+    >
       <div className="font-mono text-caption text-muted-foreground">{label}</div>
-      <p className="text-body text-foreground/90">{body}</p>
-    </article>
+      <p className="whitespace-pre-wrap text-caption leading-relaxed text-foreground/90">
+        {body}
+      </p>
+    </div>
   );
 }
