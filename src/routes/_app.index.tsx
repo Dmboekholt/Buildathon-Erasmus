@@ -44,11 +44,8 @@ function AnalyticsPage() {
     queryFn: () => fetchImprovements(),
   });
   const improvements: Improvement[] = data ?? [];
-
-
-
-function AnalyticsPage() {
   return (
+
     <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
       {/* Hero */}
       <header className="mb-14 flex items-end justify-between gap-8">
