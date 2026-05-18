@@ -79,7 +79,7 @@ function DashboardPage() {
       </header>
 
       {/* Section labels row, Faseelh-style numbered eyebrows */}
-      <div className="mb-6 grid grid-cols-1 gap-10 border-t border-border pt-6 lg:grid-cols-2">
+      <div className="mb-6 grid grid-cols-1 gap-10 border-t border-border pt-6 md:grid-cols-2">
         <div className="flex items-baseline justify-between">
           <div>
             <div className="eyebrow">01.</div>
@@ -105,7 +105,7 @@ function DashboardPage() {
       </div>
 
       {/* Two columns */}
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
         <section className="flex flex-col gap-3">
           {isLoading ? (
             <div className="text-caption text-muted-foreground">Loading…</div>
