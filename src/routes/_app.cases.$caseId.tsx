@@ -61,7 +61,7 @@ function CaseDetailPage() {
     );
   }
 
-  const content = (data.content ?? {}) as Content;
+  const content = (data.metadata ?? {}) as Content;
   const highlights = content.investment_highlights_as_written ?? [];
   const profile = content.company_profile;
   const divisions = profile?.divisions ?? [];
@@ -97,12 +97,12 @@ function CaseDetailPage() {
               {data.industry}
             </div>
           </div>
-          {data.mode && (
+          {data.status && (
             <Badge
               variant="outline"
               className="rounded-sm border-border text-caption font-normal text-muted-foreground"
             >
-              {data.mode}
+              {data.status}
             </Badge>
           )}
         </div>

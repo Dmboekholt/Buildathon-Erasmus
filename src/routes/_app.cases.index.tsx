@@ -46,12 +46,12 @@ function CasesPage() {
                     <h2 className="text-section text-foreground">
                       {c.title}
                     </h2>
-                    {c.mode && (
+                    {c.status && (
                       <Badge
                         variant="outline"
                         className="shrink-0 rounded-sm border-border text-caption font-normal text-muted-foreground"
                       >
-                        {c.mode}
+                        {c.status}
                       </Badge>
                     )}
                   </div>
@@ -60,9 +60,9 @@ function CasesPage() {
                     {c.industry}
                   </div>
                   <div className="mt-auto text-caption text-muted-foreground">
-                    Level{" "}
+                    Priority{" "}
                     <span className="font-mono text-foreground">
-                      {c.level}
+                      {c.priority}
                     </span>
                   </div>
                 </CardContent>
