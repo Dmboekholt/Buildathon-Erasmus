@@ -280,11 +280,7 @@ function CaseDetailPage() {
         </section>
       )}
 
-      <div>
-        <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-          Start review session
-        </Button>
-      </div>
+      <ReviewSession analystWork={data.metadata} company={data.company} />
     </div>
   );
 }
