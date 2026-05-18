@@ -61,28 +61,34 @@ async function callAIJson<T>(
   }
 }
 
+const QuestionSchema = z.object({
+  id: z.string(),
+  prompt: z.string(),
+  expected_answer: z.string(),
+  senior_answer: z.string(),
+  ai_answer: z.string(),
+});
+export type CurriculumQuestion = z.infer<typeof QuestionSchema>;
+
 const SeedCaseSchema = z.object({
   title: z.string(),
   era: z.string(),
   industry: z.string(),
   difficulty: z.number().int().min(1).max(10),
-  case_text: z.string(),
-  expected_insights: z.array(z.string()).min(2).max(8),
-  historical_answer: z.string(),
-  ai_answer: z.string(),
-  senior_reasoning: z.string(),
+  case_text: z.string().min(1200),
+  questions: z.array(QuestionSchema).min(4).max(6),
 });
-const SeedBatchSchema = z.object({ cases: z.array(SeedCaseSchema).min(4).max(10) });
+const SeedSingleSchema = z.object({ case: SeedCaseSchema });
 
 const FAMOUS = [
-  { title: "Enron accounting collapse", year: "2001", industry: "Energy", difficulty: 3 },
-  { title: "Long Term Capital Management blowup", year: "1998", industry: "Hedge Funds", difficulty: 4 },
-  { title: "AOL Time Warner merger", year: "2000", industry: "Media", difficulty: 2 },
-  { title: "Lehman Brothers bankruptcy", year: "2008", industry: "Investment Banking", difficulty: 5 },
-  { title: "WorldCom accounting fraud", year: "2002", industry: "Telecom", difficulty: 3 },
-  { title: "Theranos valuation collapse", year: "2015", industry: "HealthTech", difficulty: 4 },
-  { title: "Wirecard missing cash", year: "2020", industry: "Payments", difficulty: 6 },
-  { title: "Kodak digital transition failure", year: "2000s", industry: "Imaging", difficulty: 2 },
+  { title: "RJR Nabisco LBO bidding war", year: "1988", industry: "Consumer goods", difficulty: 4, focus: "leveraged buyout math, EV/EBITDA multiples, debt capacity, bidding dynamics between KKR and management" },
+  { title: "AOL Time Warner merger valuation", year: "2000", industry: "Media and internet", difficulty: 3, focus: "stock-for-stock merger, internet bubble multiples (EV/Sales, EV/Subscriber), synergy assumptions, dilution to Time Warner shareholders" },
+  { title: "Kraft Heinz 3G synergies", year: "2015", industry: "Consumer staples", difficulty: 4, focus: "zero-based budgeting, EBITDA multiple expansion, brand impairment risk, organic growth vs cost cuts" },
+  { title: "Valeant Pharmaceuticals roll-up", year: "2015", industry: "Pharma", difficulty: 6, focus: "serial acquisitions, adjusted vs GAAP EBITDA, leverage ratio, specialty pharmacy channel risk" },
+  { title: "WeWork S-1 valuation", year: "2019", industry: "Real estate / coworking", difficulty: 5, focus: "community adjusted EBITDA, lease liabilities vs revenue, contribution margin, comparable multiples vs IWG" },
+  { title: "Anheuser-Busch InBev leverage post SABMiller", year: "2016", industry: "Beverages", difficulty: 5, focus: "Net debt / EBITDA, FX exposure, synergy realization, dividend sustainability" },
+  { title: "Lehman Brothers Repo 105", year: "2008", industry: "Investment banking", difficulty: 7, focus: "off-balance-sheet financing, leverage ratio window-dressing, mark-to-market on Alt-A and CDOs, funding fragility" },
+  { title: "General Electric conglomerate discount", year: "2017", industry: "Industrials", difficulty: 5, focus: "sum-of-the-parts valuation, GE Capital insurance reserves, pension underfunding, dividend cover" },
 ];
 
 export const seedCurriculumIfEmpty = createServerFn({ method: "POST" }).handler(
@@ -93,52 +99,57 @@ export const seedCurriculumIfEmpty = createServerFn({ method: "POST" }).handler(
     if (cErr) throw new Error(cErr.message);
     if ((count ?? 0) > 0) return { seeded: 0 };
 
-    const prompt = `For each of the following historical financial events, produce a structured learning challenge for a junior investment analyst. Output strict JSON: { "cases": [...] }.
+    const systemPrompt = `You are a curriculum designer for investment banking and equity research analysts. You write long, dense, numerically rich historical financial cases. Output strict JSON only. Never use em dashes or en dashes. Use periods, commas, or colons instead.`;
 
-Each case object:
+    const seeded: { title: string }[] = [];
+    for (const f of FAMOUS) {
+      const userContent = `Produce ONE in-depth historical case for an analyst. Output strict JSON: { "case": {...} }.
+
+Case object:
 {
-  "title": string,
-  "era": string (e.g. "2001"),
-  "industry": string,
-  "difficulty": integer 1-10 (use the provided difficulty),
-  "case_text": 6 to 10 sentence scenario written in the present tense, omitting the outcome, with the financial signals an analyst could have noticed at the time,
-  "expected_insights": array of 3 to 5 short insight strings (the key things a sharp analyst should call out),
-  "historical_answer": what actually happened plus the senior team conclusion (3 to 5 sentences),
-  "ai_answer": an AI analyst's structured take written in the moment, with stated assumptions (3 to 5 sentences),
-  "senior_reasoning": how an experienced senior analyst would frame the situation, focusing on pattern recognition, risk, and judgment (3 to 5 sentences)
-}
+  "title": "${f.title}",
+  "era": "${f.year}",
+  "industry": "${f.industry}",
+  "difficulty": ${f.difficulty},
+  "case_text": a long, dense scenario of AT LEAST 800 words, written in the present tense as if the analyst is in the room at the time. Include concrete numbers: revenue, EBITDA, multiples, leverage, share price, market cap, growth rates, comparable transactions. Include at least one small data table written in plain text (lines like "Revenue 2014: 6.1bn"). Do NOT reveal the eventual outcome. Focus area: ${f.focus}.
+  "questions": array of 4 to 6 structured analyst questions. Each question:
+    {
+      "id": short slug like "q1",
+      "prompt": a specific analytical question that requires reasoning with the numbers above (e.g. "What EV/EBITDA multiple would you apply and what is the implied enterprise value, given the comparable set in the case?"),
+      "expected_answer": the textbook / historical correct answer with the actual numbers and the methodology, 3 to 6 sentences,
+      "senior_answer": how an experienced senior analyst would answer, focused on judgment, what they would push back on, what they would triangulate, 3 to 6 sentences,
+      "ai_answer": a structured AI analyst answer with stated assumptions and a numerical estimate, 3 to 6 sentences
+    }
 
 Rules:
-- Never use em dashes or en dashes. Use commas, colons, or periods.
-- Be specific. Reference real numbers, ratios, or facts where they exist.
-- Do not reveal the outcome inside case_text.
+- Questions must require multi-step reasoning, not trivia.
+- At least 2 questions must involve a numerical calculation (multiples, leverage, accretion/dilution, IRR, synergy value).
+- At least 1 question must be about risk or what the analyst would push back on.
+- Never use em dashes or en dashes.
+- Output strict JSON only.`;
 
-Cases to generate:
-${JSON.stringify(FAMOUS)}`;
-
-    const out = await callAIJson(
-      SeedBatchSchema,
-      "You are a curriculum designer for investment analysts. Output strict JSON only.",
-      prompt,
-    );
-
-    const rows = out.cases.map((c) => ({
-      title: c.title,
-      era: c.era,
-      industry: c.industry,
-      difficulty: c.difficulty,
-      case_text: c.case_text,
-      expected_insights: c.expected_insights,
-      historical_answer: c.historical_answer,
-      ai_answer: c.ai_answer,
-      senior_reasoning: c.senior_reasoning,
-      source: "seeded",
-    }));
-    const { error: iErr, count: inserted } = await supabaseAdmin
-      .from("curriculum_cases")
-      .insert(rows, { count: "exact" });
-    if (iErr) throw new Error(iErr.message);
-    return { seeded: inserted ?? rows.length };
+      try {
+        const out = await callAIJson(SeedSingleSchema, systemPrompt, userContent);
+        const c = out.case;
+        const { error } = await supabaseAdmin.from("curriculum_cases").insert({
+          title: c.title,
+          era: c.era,
+          industry: c.industry,
+          difficulty: c.difficulty,
+          case_text: c.case_text,
+          expected_insights: c.questions.map((q) => q.prompt),
+          historical_answer: c.questions.map((q) => q.expected_answer).join("\n\n"),
+          ai_answer: c.questions.map((q) => q.ai_answer).join("\n\n"),
+          senior_reasoning: c.questions.map((q) => q.senior_answer).join("\n\n"),
+          questions: c.questions,
+          source: "seeded",
+        });
+        if (!error) seeded.push({ title: c.title });
+      } catch (e) {
+        console.error(`Seed failed for ${f.title}:`, (e as Error).message);
+      }
+    }
+    return { seeded: seeded.length };
   },
 );
 
@@ -175,46 +186,46 @@ export const getProgress = createServerFn({ method: "GET" }).handler(async () =>
   };
 });
 
-export const pickCaseForLevel = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { data: prog } = await supabaseAdmin
-      .from("curriculum_progress")
-      .select("level")
-      .eq("analyst_id", ANALYST_ID)
-      .maybeSingle();
-    const level = prog?.level ?? 1;
+export const listCases = createServerFn({ method: "GET" }).handler(async () => {
+  const { data, error } = await supabaseAdmin
+    .from("curriculum_cases")
+    .select("id, title, era, industry, difficulty, source, created_at")
+    .eq("source", "seeded")
+    .order("difficulty", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+});
 
-    const { data: cases } = await supabaseAdmin
+export const getCase = createServerFn({ method: "GET" })
+  .inputValidator((input) => z.object({ caseId: z.string().uuid() }).parse(input))
+  .handler(async ({ data }) => {
+    const { data: c, error } = await supabaseAdmin
       .from("curriculum_cases")
-      .select("id, title, era, industry, difficulty, case_text, expected_insights")
-      .lte("difficulty", level + 1)
-      .order("difficulty", { ascending: true });
-
-    if (!cases || cases.length === 0) return null;
-
-    const { data: attempts } = await supabaseAdmin
-      .from("curriculum_attempts")
-      .select("case_id")
-      .eq("analyst_id", ANALYST_ID);
-    const attempted = new Set((attempts ?? []).map((a) => a.case_id));
-
-    const fresh = cases.filter((c) => !attempted.has(c.id));
-    const pool = fresh.length > 0 ? fresh : cases;
-    const pick = pool[Math.floor(Math.random() * pool.length)];
+      .select("id, title, era, industry, difficulty, case_text, questions")
+      .eq("id", data.caseId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!c) throw new Error("Case not found");
+    const questions = (c.questions as CurriculumQuestion[] | null) ?? [];
     return {
-      id: pick.id,
-      title: pick.title,
-      era: pick.era,
-      industry: pick.industry,
-      difficulty: pick.difficulty,
-      case_text: pick.case_text,
-      expected_insight_count: (pick.expected_insights ?? []).length,
-      analyst_level: level,
+      id: c.id as string,
+      title: c.title as string,
+      era: c.era as string | null,
+      industry: c.industry as string | null,
+      difficulty: c.difficulty as number,
+      case_text: c.case_text as string,
+      // Send only prompts to the client during the in-progress state.
+      questions: questions.map((q) => ({ id: q.id, prompt: q.prompt })),
     };
-  },
-);
+  });
 
-const ScoreSchema = z.object({
+const PerQuestionScoreSchema = z.object({
+  id: z.string(),
+  score: z.number().min(0).max(100),
+  feedback: z.string().max(800),
+});
+const SubmitScoreSchema = z.object({
+  per_question: z.array(PerQuestionScoreSchema),
   accuracy_score: z.number().min(0).max(100),
   alignment_historical: z.number().min(0).max(100),
   alignment_ai: z.number().min(0).max(100),
@@ -232,20 +243,21 @@ export const submitAttempt = createServerFn({ method: "POST" })
     z
       .object({
         caseId: z.string().uuid(),
-        writtenInsight: z.string().min(1).max(8000),
+        answers: z.record(z.string(), z.string().min(1).max(4000)),
       })
       .parse(input),
   )
   .handler(async ({ data }) => {
     const { data: c, error: cErr } = await supabaseAdmin
       .from("curriculum_cases")
-      .select(
-        "id, title, case_text, expected_insights, historical_answer, ai_answer, senior_reasoning",
-      )
+      .select("id, title, case_text, questions")
       .eq("id", data.caseId)
       .maybeSingle();
     if (cErr) throw new Error(cErr.message);
     if (!c) throw new Error("Case not found");
+
+    const questions = (c.questions as CurriculumQuestion[] | null) ?? [];
+    if (questions.length === 0) throw new Error("Case has no questions");
 
     const { data: prog } = await supabaseAdmin
       .from("curriculum_progress")
@@ -254,30 +266,38 @@ export const submitAttempt = createServerFn({ method: "POST" })
       .maybeSingle();
     const level = prog?.level ?? 1;
 
-    const systemPrompt = `You are a senior investment analyst evaluating a junior analyst's written insight on a historical case. Score honestly. Average performance is around 60. Output strict JSON only. Never use em dashes or en dashes.`;
+    const evalPayload = questions.map((q) => ({
+      id: q.id,
+      question: q.prompt,
+      expected_answer: q.expected_answer,
+      senior_answer: q.senior_answer,
+      ai_answer: q.ai_answer,
+      analyst_answer: data.answers[q.id] ?? "",
+    }));
+
+    const systemPrompt = `You are a senior investment analyst grading a junior analyst's answers to a multi-question historical case. Score honestly. Average performance is around 60. Output strict JSON only. Never use em dashes or en dashes.`;
     const userContent = `Case title: ${c.title}
-Case text: ${c.case_text}
-Expected insights: ${JSON.stringify(c.expected_insights)}
-Historical answer (ground truth): ${c.historical_answer}
-AI answer: ${c.ai_answer}
-Senior reasoning: ${c.senior_reasoning}
 
-Analyst answer:
-"""
-${data.writtenInsight}
-"""
+Per question evaluation set (compare analyst_answer against expected_answer, senior_answer, ai_answer):
+${JSON.stringify(evalPayload, null, 2)}
 
-Return JSON with exactly this shape:
+Return strict JSON with this shape:
 {
-  "accuracy_score": 0-100 (overall correctness of the analyst's insight),
-  "alignment_historical": 0-100 (how close to what actually happened and the senior team conclusion),
-  "alignment_ai": 0-100 (how close to the AI's structured take),
-  "alignment_senior": 0-100 (how close to senior-style reasoning),
+  "per_question": [ { "id": <question id>, "score": 0-100, "feedback": short 1-3 sentence note } ],
+  "accuracy_score": 0-100 (overall, weighted average of per_question),
+  "alignment_historical": 0-100 (how close overall to the expected answers),
+  "alignment_ai": 0-100 (how close overall to the AI answers),
+  "alignment_senior": 0-100 (how close overall to the senior answers),
   "skill_indicators": { "insight": 0-100, "risk_awareness": 0-100, "pattern_recognition": 0-100 },
-  "feedback": short paragraph of constructive feedback, 2 to 4 sentences
+  "feedback": short paragraph of constructive overall feedback, 2 to 4 sentences
 }`;
 
-    const scored = await callAIJson(ScoreSchema, systemPrompt, userContent);
+    const scored = await callAIJson(SubmitScoreSchema, systemPrompt, userContent);
+
+    const perQuestionMap: Record<string, { score: number; feedback: string }> = {};
+    for (const p of scored.per_question) {
+      perQuestionMap[p.id] = { score: Math.round(p.score), feedback: p.feedback };
+    }
 
     const { data: row, error: aErr } = await supabaseAdmin
       .from("curriculum_attempts")
@@ -285,7 +305,9 @@ Return JSON with exactly this shape:
         case_id: c.id,
         analyst_id: ANALYST_ID,
         analyst_level: level,
-        written_insight: data.writtenInsight,
+        written_insight: "",
+        answers: data.answers,
+        per_question_scores: perQuestionMap,
         accuracy_score: Math.round(scored.accuracy_score),
         alignment_historical: Math.round(scored.alignment_historical),
         alignment_ai: Math.round(scored.alignment_ai),
@@ -301,70 +323,19 @@ Return JSON with exactly this shape:
       attemptId: row.id as string,
       scored,
       reveal: {
-        title: c.title,
-        expected_insights: c.expected_insights,
-        historical_answer: c.historical_answer,
-        ai_answer: c.ai_answer,
-        senior_reasoning: c.senior_reasoning,
+        title: c.title as string,
+        questions: questions.map((q) => ({
+          id: q.id,
+          prompt: q.prompt,
+          analyst_answer: data.answers[q.id] ?? "",
+          expected_answer: q.expected_answer,
+          senior_answer: q.senior_answer,
+          ai_answer: q.ai_answer,
+          score: perQuestionMap[q.id]?.score ?? 0,
+          feedback: perQuestionMap[q.id]?.feedback ?? "",
+        })),
       },
     };
-  });
-
-const SeniorCaseSchema = SeedCaseSchema;
-
-export const submitSeniorCase = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z
-      .object({
-        title: z.string().min(1).max(200),
-        rawText: z.string().min(20).max(20000),
-      })
-      .parse(input),
-  )
-  .handler(async ({ data }) => {
-    const prompt = `Convert the following senior submitted case material into a structured learning challenge. Output strict JSON matching this shape:
-{
-  "title": string (use the supplied title or refine it),
-  "era": string,
-  "industry": string,
-  "difficulty": integer 1-10,
-  "case_text": 6 to 10 sentence scenario, omit the outcome,
-  "expected_insights": 3 to 5 short strings,
-  "historical_answer": 3 to 5 sentences,
-  "ai_answer": 3 to 5 sentences,
-  "senior_reasoning": 3 to 5 sentences
-}
-
-Rules: never use em dashes or en dashes. Be specific.
-
-Supplied title: ${data.title}
-Raw material:
-"""
-${data.rawText}
-"""`;
-    const parsed = await callAIJson(
-      SeniorCaseSchema,
-      "You are a curriculum designer for investment analysts. Output strict JSON only.",
-      prompt,
-    );
-    const { data: row, error } = await supabaseAdmin
-      .from("curriculum_cases")
-      .insert({
-        title: parsed.title,
-        era: parsed.era,
-        industry: parsed.industry,
-        difficulty: parsed.difficulty,
-        case_text: parsed.case_text,
-        expected_insights: parsed.expected_insights,
-        historical_answer: parsed.historical_answer,
-        ai_answer: parsed.ai_answer,
-        senior_reasoning: parsed.senior_reasoning,
-        source: "senior_upload",
-      })
-      .select("id, title, difficulty")
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
   });
 
 export const listAttempts = createServerFn({ method: "GET" }).handler(
@@ -381,12 +352,3 @@ export const listAttempts = createServerFn({ method: "GET" }).handler(
     return data ?? [];
   },
 );
-
-export const listCases = createServerFn({ method: "GET" }).handler(async () => {
-  const { data, error } = await supabaseAdmin
-    .from("curriculum_cases")
-    .select("id, title, era, industry, difficulty, source, created_at")
-    .order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data ?? [];
-});

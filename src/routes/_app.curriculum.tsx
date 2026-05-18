@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getProgress, LEVEL_NAMES } from "@/lib/curriculum.functions";
@@ -7,14 +7,7 @@ export const Route = createFileRoute("/_app/curriculum")({
   component: CurriculumLayout,
 });
 
-const tabs = [
-  { label: "Challenge", url: "/curriculum" },
-  { label: "Senior Upload", url: "/curriculum/upload" },
-  { label: "Manager Dashboard", url: "/curriculum/manager" },
-];
-
 function CurriculumLayout() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
   const fetchProgress = useServerFn(getProgress);
   const { data } = useQuery({
     queryKey: ["curriculum-progress"],
@@ -36,11 +29,10 @@ function CurriculumLayout() {
           <span className="text-muted-foreground">historical cases.</span>
         </h1>
         <p className="mt-4 max-w-xl text-body text-muted-foreground">
-          Read a real case from financial history, write your insight, and compare your reasoning to what actually happened, what an AI proposed, and how a senior analyst would frame it.
+          Start a long-form historical case, answer a set of structured questions, then compare your reasoning to the expected answer, the AI answer, and a senior analyst's answer.
         </p>
       </header>
 
-      {/* Progress strip */}
       <section className="mb-10 rounded-lg border border-border bg-card p-6">
         <div className="mb-4 flex items-baseline justify-between">
           <div>
@@ -84,26 +76,6 @@ function CurriculumLayout() {
           Reach 80 average over your last 5 challenges at this level to advance.
         </div>
       </section>
-
-      {/* Tab bar */}
-      <nav className="mb-8 flex gap-1 border-b border-border">
-        {tabs.map((t) => {
-          const active = pathname === t.url;
-          return (
-            <Link
-              key={t.url}
-              to={t.url}
-              className={`-mb-px border-b-2 px-4 py-2.5 text-body transition-colors ${
-                active
-                  ? "border-foreground text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </Link>
-          );
-        })}
-      </nav>
 
       <Outlet />
     </div>

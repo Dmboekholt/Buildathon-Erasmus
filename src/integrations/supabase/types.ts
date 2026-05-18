@@ -99,10 +99,12 @@ export type Database = {
           alignment_senior: number
           analyst_id: string
           analyst_level: number
+          answers: Json
           case_id: string
           created_at: string
           feedback: string | null
           id: string
+          per_question_scores: Json
           skill_indicators: Json
           written_insight: string
         }
@@ -113,12 +115,14 @@ export type Database = {
           alignment_senior?: number
           analyst_id?: string
           analyst_level?: number
+          answers?: Json
           case_id: string
           created_at?: string
           feedback?: string | null
           id?: string
+          per_question_scores?: Json
           skill_indicators?: Json
-          written_insight: string
+          written_insight?: string
         }
         Update: {
           accuracy_score?: number
@@ -127,10 +131,12 @@ export type Database = {
           alignment_senior?: number
           analyst_id?: string
           analyst_level?: number
+          answers?: Json
           case_id?: string
           created_at?: string
           feedback?: string | null
           id?: string
+          per_question_scores?: Json
           skill_indicators?: Json
           written_insight?: string
         }
@@ -155,6 +161,7 @@ export type Database = {
           historical_answer: string
           id: string
           industry: string | null
+          questions: Json
           senior_reasoning: string
           source: string
           title: string
@@ -170,6 +177,7 @@ export type Database = {
           historical_answer: string
           id?: string
           industry?: string | null
+          questions?: Json
           senior_reasoning: string
           source?: string
           title: string
@@ -185,6 +193,7 @@ export type Database = {
           historical_answer?: string
           id?: string
           industry?: string | null
+          questions?: Json
           senior_reasoning?: string
           source?: string
           title?: string
