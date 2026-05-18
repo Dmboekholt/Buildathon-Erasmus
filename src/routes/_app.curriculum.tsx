@@ -24,7 +24,7 @@ function CurriculumLayout() {
       <header className="mb-10">
         <div className="eyebrow mb-4">02. Learning curriculum</div>
         <h1 className="font-display text-[44px] leading-[48px] tracking-[-0.025em] text-foreground">
-          Practice judgment on
+          Practice <Highlight>judgment</Highlight> on
           <br />
           <span className="text-muted-foreground">historical cases.</span>
         </h1>

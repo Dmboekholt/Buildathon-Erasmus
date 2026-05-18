@@ -19,7 +19,7 @@ function CasesPage() {
   return (
     <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
       <header className="mb-12">
-        <h1 className="text-page-title text-foreground">Cases</h1>
+        <h1 className="text-page-title text-foreground"><Highlight>Cases</Highlight></h1>
         <p className="mt-3 text-caption text-muted-foreground">
           Investment memoranda available for review.
         </p>
