@@ -27,6 +27,7 @@ function ChallengePage() {
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
   const [result, setResult] = useState<SubmitResult | null>(null);
   const [seedNotice, setSeedNotice] = useState<string | null>(null);
+  const [isReseeding, setIsReseeding] = useState(false);
 
   const { data: cases, isLoading, refetch, isFetching } = useQuery({
     queryKey: ["curriculum-cases"],
@@ -44,6 +45,23 @@ function ChallengePage() {
       return first;
     },
   });
+
+  const runReseed = async () => {
+    setSeedNotice(null);
+    setIsReseeding(true);
+    try {
+      const res = await forceReseed();
+      setSeedNotice(
+        `Re-seed completed with ${res.seeded} successes and ${res.failures.length} failures.${res.failures[0] ? ` First failure: ${res.failures[0].reason}` : ""}`,
+      );
+      await qc.invalidateQueries({ queryKey: ["curriculum-case"] });
+      await refetch();
+    } catch (e) {
+      setSeedNotice(`Re-seed failed: ${(e as Error).message}`);
+    } finally {
+      setIsReseeding(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -77,11 +95,7 @@ function ChallengePage() {
         onSubmitted={(r) => setResult(r)}
         onReseed={async () => {
           setActiveCaseId(null);
-          const res = await forceReseed();
-          setSeedNotice(
-            `Re-seed completed with ${res.seeded} successes and ${res.failures.length} failures.${res.failures[0] ? ` First failure: ${res.failures[0].reason}` : ""}`,
-          );
-          await refetch();
+          await runReseed();
         }}
       />
     );
@@ -90,19 +104,14 @@ function ChallengePage() {
   return (
     <BrowsePanel
       cases={cases ?? []}
-      busy={isFetching}
+      busy={isFetching || isReseeding}
       seedNotice={seedNotice}
       onStart={(id) => {
         setResult(null);
         setActiveCaseId(id);
       }}
       onReseed={async () => {
-        setSeedNotice(null);
-        const res = await forceReseed();
-        setSeedNotice(
-          `Re-seed completed with ${res.seeded} successes and ${res.failures.length} failures.${res.failures[0] ? ` First failure: ${res.failures[0].reason}` : ""}`,
-        );
-        await refetch();
+        await runReseed();
       }}
     />
   );
