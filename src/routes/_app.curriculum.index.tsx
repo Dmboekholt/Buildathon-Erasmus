@@ -169,6 +169,7 @@ function InProgressCase({
   caseId,
   onExit,
   onSubmitted,
+  onReseed,
 }: {
   caseId: string;
   onExit: () => void;
