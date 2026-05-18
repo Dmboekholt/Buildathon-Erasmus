@@ -11,9 +11,8 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
-import { Route as ApiPublicElevenlabsWebhookRouteImport } from './routes/api/public/elevenlabs-webhook'
-import { Route as AppTasksTaskIdRouteImport } from './routes/_app.tasks.$taskId'
+import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
+import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -24,64 +23,44 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppTasksIndexRoute = AppTasksIndexRouteImport.update({
-  id: '/tasks/',
-  path: '/tasks/',
+const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
+  id: '/cases/',
+  path: '/cases/',
   getParentRoute: () => AppRoute,
 } as any)
-const ApiPublicElevenlabsWebhookRoute =
-  ApiPublicElevenlabsWebhookRouteImport.update({
-    id: '/api/public/elevenlabs-webhook',
-    path: '/api/public/elevenlabs-webhook',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AppTasksTaskIdRoute = AppTasksTaskIdRouteImport.update({
-  id: '/tasks/$taskId',
-  path: '/tasks/$taskId',
+const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
+  id: '/cases/$caseId',
+  path: '/cases/$caseId',
   getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
-  '/tasks/$taskId': typeof AppTasksTaskIdRoute
-  '/api/public/elevenlabs-webhook': typeof ApiPublicElevenlabsWebhookRoute
-  '/tasks/': typeof AppTasksIndexRoute
+  '/cases/$caseId': typeof AppCasesCaseIdRoute
+  '/cases/': typeof AppCasesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
-  '/tasks/$taskId': typeof AppTasksTaskIdRoute
-  '/api/public/elevenlabs-webhook': typeof ApiPublicElevenlabsWebhookRoute
-  '/tasks': typeof AppTasksIndexRoute
+  '/cases/$caseId': typeof AppCasesCaseIdRoute
+  '/cases': typeof AppCasesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/_app/': typeof AppIndexRoute
-  '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
-  '/api/public/elevenlabs-webhook': typeof ApiPublicElevenlabsWebhookRoute
-  '/_app/tasks/': typeof AppTasksIndexRoute
+  '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
+  '/_app/cases/': typeof AppCasesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/tasks/$taskId'
-    | '/api/public/elevenlabs-webhook'
-    | '/tasks/'
+  fullPaths: '/' | '/cases/$caseId' | '/cases/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tasks/$taskId' | '/api/public/elevenlabs-webhook' | '/tasks'
-  id:
-    | '__root__'
-    | '/_app'
-    | '/_app/'
-    | '/_app/tasks/$taskId'
-    | '/api/public/elevenlabs-webhook'
-    | '/_app/tasks/'
+  to: '/' | '/cases/$caseId' | '/cases'
+  id: '__root__' | '/_app' | '/_app/' | '/_app/cases/$caseId' | '/_app/cases/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
-  ApiPublicElevenlabsWebhookRoute: typeof ApiPublicElevenlabsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -100,25 +79,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/tasks/': {
-      id: '/_app/tasks/'
-      path: '/tasks'
-      fullPath: '/tasks/'
-      preLoaderRoute: typeof AppTasksIndexRouteImport
+    '/_app/cases/': {
+      id: '/_app/cases/'
+      path: '/cases'
+      fullPath: '/cases/'
+      preLoaderRoute: typeof AppCasesIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/api/public/elevenlabs-webhook': {
-      id: '/api/public/elevenlabs-webhook'
-      path: '/api/public/elevenlabs-webhook'
-      fullPath: '/api/public/elevenlabs-webhook'
-      preLoaderRoute: typeof ApiPublicElevenlabsWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_app/tasks/$taskId': {
-      id: '/_app/tasks/$taskId'
-      path: '/tasks/$taskId'
-      fullPath: '/tasks/$taskId'
-      preLoaderRoute: typeof AppTasksTaskIdRouteImport
+    '/_app/cases/$caseId': {
+      id: '/_app/cases/$caseId'
+      path: '/cases/$caseId'
+      fullPath: '/cases/$caseId'
+      preLoaderRoute: typeof AppCasesCaseIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -126,22 +98,31 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
-  AppTasksTaskIdRoute: typeof AppTasksTaskIdRoute
-  AppTasksIndexRoute: typeof AppTasksIndexRoute
+  AppCasesCaseIdRoute: typeof AppCasesCaseIdRoute
+  AppCasesIndexRoute: typeof AppCasesIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
-  AppTasksTaskIdRoute: AppTasksTaskIdRoute,
-  AppTasksIndexRoute: AppTasksIndexRoute,
+  AppCasesCaseIdRoute: AppCasesCaseIdRoute,
+  AppCasesIndexRoute: AppCasesIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
-  ApiPublicElevenlabsWebhookRoute: ApiPublicElevenlabsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
