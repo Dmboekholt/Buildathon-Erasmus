@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, FolderOpen } from "lucide-react";
+import { BarChart3, FolderOpen, GraduationCap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +15,7 @@ import {
 const items = [
   { title: "Analytics", url: "/", icon: BarChart3 },
   { title: "Cases", url: "/cases", icon: FolderOpen },
+  { title: "Learning Curriculum", url: "/curriculum", icon: GraduationCap },
 ];
 
 export function AppSidebar() {
