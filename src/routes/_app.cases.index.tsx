@@ -32,43 +32,56 @@ function CasesPage() {
           No cases yet.
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {(data ?? []).map((c) => (
-            <Link
-              key={c.id}
-              to="/cases/$caseId"
-              params={{ caseId: c.id }}
-              className="block"
-            >
-              <Card className="h-full border-border bg-card transition-colors hover:border-foreground/30">
-                <CardContent className="flex h-full flex-col gap-3 p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="text-section text-foreground">
-                      {c.title}
-                    </h2>
-                    {c.status && (
-                      <Badge
-                        variant="outline"
-                        className="shrink-0 rounded-sm border-border text-caption font-normal text-muted-foreground"
-                      >
-                        {c.status}
-                      </Badge>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          {(data ?? []).map((c) => {
+            const priorityTone =
+              c.priority === "high"
+                ? "border-foreground/40 text-foreground"
+                : c.priority === "medium"
+                  ? "border-border text-muted-foreground"
+                  : "border-border text-muted-foreground/70";
+            return (
+              <Link
+                key={c.id}
+                to="/cases/$caseId"
+                params={{ caseId: c.id }}
+                className="block"
+              >
+                <Card className="h-full border-border bg-card transition-colors hover:border-foreground/30">
+                  <CardContent className="flex h-full flex-col gap-6 p-7">
+                    <div className="flex items-start justify-between gap-4">
+                      <h2 className="text-section text-foreground">
+                        {c.title}
+                      </h2>
+                      {c.priority && (
+                        <Badge
+                          variant="outline"
+                          className={`shrink-0 rounded-pill px-2.5 py-0.5 text-caption font-mono font-normal uppercase tracking-wider ${priorityTone}`}
+                        >
+                          {c.priority}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="text-caption font-medium text-foreground">
+                        {c.company}
+                      </div>
+                      <div className="text-caption text-muted-foreground">
+                        {c.industry}
+                      </div>
+                    </div>
+
+                    {c.summary && (
+                      <p className="text-body leading-relaxed text-muted-foreground">
+                        {c.summary}
+                      </p>
                     )}
-                  </div>
-                  <div className="text-body text-foreground">{c.company}</div>
-                  <div className="text-caption text-muted-foreground">
-                    {c.industry}
-                  </div>
-                  <div className="mt-auto text-caption text-muted-foreground">
-                    Priority{" "}
-                    <span className="font-mono text-foreground">
-                      {c.priority}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                  </CardContent>
+                </Card>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
