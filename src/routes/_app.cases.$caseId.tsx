@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
 import { getCase } from "@/lib/cases.functions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ReviewSession } from "@/components/case/ReviewSession";
 import {
   Table,
   TableBody,
@@ -280,11 +280,7 @@ function CaseDetailPage() {
         </section>
       )}
 
-      <div>
-        <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-          Start review session
-        </Button>
-      </div>
+      <ReviewSession analystWork={data.metadata} company={data.company ?? ""} />
     </div>
   );
 }

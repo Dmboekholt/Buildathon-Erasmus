@@ -1,41 +1,60 @@
 ## Goal
-Reframe the home route (`/`) from a "Dashboard" with two columns (Cases + Improvements) into an "Analytics" page that focuses purely on improvement signals across three categories: Decision Making, Insights, and Judgement. Keep "Browse cases" as the only entry point to cases from this page.
+Wire the existing "Start review session" button on `/cases/$caseId` to start a live ElevenLabs voice conversation, without altering the rest of the page or the design system.
 
-## Changes
+## Steps
 
-### 1. Rename "Dashboard" to "Analytics"
-- `src/routes/_app.index.tsx`: eyebrow `00. Dashboard` to `00. Analytics`, and refresh the hero heading/subcopy to fit an analytics framing (no em-dashes, per project rule).
-- `src/components/layout/AppSidebar.tsx`: nav item label `Dashboard` to `Analytics` (keep `/` url, swap icon to `BarChart3`).
-- `src/components/layout/TopNav.tsx`: tab label `Dashboard` to `Analytics` (rename `isDashboard` to `isAnalytics` for clarity).
+### 1. Dependency and env
+- Install `@elevenlabs/react` via `bun add @elevenlabs/react`.
+- Append `VITE_ELEVENLABS_AGENT_ID=""` to `.env` so the user can fill in the value.
 
-### 2. Hero / top section
-- Keep the `Browse cases` pill button on the top right (unchanged behavior).
-- Remove the two-column section header row (`01. Cases` / `02. Improvements`).
-- Keep a single horizontal divider line under the hero.
+### 2. New component: `src/components/case/ReviewSession.tsx`
+Client-only voice session UI. Receives props `{ analystWork: unknown; company: string }`.
 
-### 3. Below the line: Improvements only
-Replace the current two-column grid with a single Improvements section composed of:
+- Imports `useConversation` from `@elevenlabs/react` and `Button` from `@/components/ui/button`.
+- SSR guard: render nothing until a `mounted` state flips true inside `useEffect`. This prevents the hook's microphone / WebRTC code paths from running on the server.
+- Local state:
+  - `transcript: Array<{ role: string; text: string; at: number }>` populated from the hook's `onMessage` callback (kept in state only, not rendered, per spec).
+  - `error: string | null` for inline error display.
+- `useConversation({ onMessage, onError, onDisconnect })`:
+  - `onMessage` pushes message info into `transcript`.
+  - `onError` sets `error` to "Connection failed. Please try again."
+- `startSession` handler:
+  1. Reads `agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID`. If missing, set error and stop.
+  2. `await navigator.mediaDevices.getUserMedia({ audio: true })` inside try/catch; on failure set error to "Microphone access denied." and stop.
+  3. `await conversation.startSession({ agentId, connectionType: "webrtc", dynamicVariables: { analyst_work: JSON.stringify(analystWork), company } })`. On throw set error to "Could not start session.".
+- `endSession` handler calls `await conversation.endSession()`.
+- Render logic:
+  - If `conversation.status === "disconnected"` and no session has started yet: render the existing-style primary button "Start review session" (`bg-accent text-accent-foreground hover:bg-accent/90`), and the inline error text below it (`text-caption text-destructive`) when set.
+  - Otherwise render a call panel using existing tokens (`rounded-md border border-border bg-card px-5 py-5`) containing:
+    - Status line (`text-caption text-muted-foreground`): "Connecting." while `status !== "connected"`, "In session." while connected, "Ended." after disconnect (track via local `hasEnded` state set in `onDisconnect`).
+    - Subtle speaking indicator: a small dot (`h-1.5 w-1.5 rounded-full bg-foreground`) with `animate-pulse` shown only when `conversation.isSpeaking`, paired with the muted-foreground label "Agent speaking.".
+    - Primary "End session" button (same accent styling) wired to `endSession`. After end, swap to a secondary "Start new session" button that resets state.
+    - Inline error text below when `error` is set.
+- All copy uses periods, no em-dashes or en-dashes.
 
-a. **Category score panel** (the "nice graph") at the top, full width:
-   - Three categories: Decision Making, Insights, Judgement.
-   - For each: a label, a numeric score (0 to 100), and a horizontal progress bar rendered with semantic tokens (`bg-muted` track, `bg-foreground` fill). Pure CSS, no chart lib.
-   - Scores derived locally from the improvements list (count + priority weighting per category). Each improvement gets a `category` field of one of the three values.
-   - Layout: 3 column grid on `md+`, stacked on mobile. Generous padding consistent with the rest of the page (`p-6` to `p-8`, `gap-8`).
+### 3. Edit `src/routes/_app.cases.$caseId.tsx`
+- Replace the bottom block:
+  ```tsx
+  <div>
+    <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
+      Start review session
+    </Button>
+  </div>
+  ```
+  with `<ReviewSession analystWork={data.metadata} company={data.company} />`.
+- Remove the now-unused `Button` import only if no other usage remains (it will be unused after this change).
+- Do not touch any other section. `examiner_note`, `weak_spot`, and `coaching_priorities` were never rendered and remain unrendered; they ride along inside `analyst_work` via `JSON.stringify(data.metadata)`.
 
-b. **Improvement cards list** below the score panel:
-   - Reuse current card style (title, priority badge top right, area/category as subtext).
-   - Update seed data so each item has a `category` of Decision Making | Insights | Judgement, and `area` text reads naturally without em-dashes.
-   - Single column on mobile, 2 columns on `md+`.
-
-### 4. Data model tweak
-- Extend the `Improvement` type with `category: "Decision Making" | "Insights" | "Judgement"`.
-- Update the existing 4 seed entries to assign a category each, and add 2 more so all three categories are represented.
-
-### 5. Cleanup
-- Remove `listCases` import, `useQuery`/`useServerFn` usage, and `cases` rendering from `_app.index.tsx`.
-- Remove now unused imports.
+### 4. Verification
+- Run the typecheck implicitly via the harness build.
+- Confirm by reading the changed files that no other styles, fonts, or components were modified.
 
 ## Out of scope
-- No backend or schema changes; scores are derived client side from seed data.
-- No changes to `/cases` route or case detail pages.
-- No chart library; the visualization is CSS progress bars to stay lightweight and on-brand.
+- No server token endpoint. We use direct `agentId` connection per spec ("connecting by agentId"). If the ElevenLabs agent requires auth later, we will add a server function then.
+- No persistence of transcript yet; it stays in component state for a later step.
+- No new design tokens or component variants.
+
+## Technical notes
+- `import.meta.env.VITE_ELEVENLABS_AGENT_ID` is read at module/component scope only inside the click handler so a missing value doesn't crash render.
+- The component is the SSR boundary. Even though TanStack Start SSRs route components, the `mounted` gate ensures `useConversation`'s browser APIs are only exercised client-side.
+- The current `@elevenlabs/react` `useConversation().startSession` accepts `{ agentId, connectionType, dynamicVariables }`; this matches the knowledge file examples for public agents.
