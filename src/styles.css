@@ -2,61 +2,77 @@
 @source "../src";
 
 /*
- * Judgment ledger — design system.
- * Austere, enterprise financial software. Crimson used sparingly.
- * Hairline borders, generous whitespace, no shadows.
+ * Judgment ledger — enterprise design system.
+ * Navy Trust palette + Outfit/Figtree typography.
+ * Dense, institutional, hairline borders, no shadows.
  */
 
 @theme inline {
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 12px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
 
   /* Surfaces */
-  --color-background: #f9fafb;
-  --color-foreground: #1a1a1a;
+  --color-background: #f4f6fa;
+  --color-foreground: #0f1b3d;
   --color-card: #ffffff;
-  --color-card-foreground: #1a1a1a;
+  --color-card-foreground: #0f1b3d;
   --color-popover: #ffffff;
-  --color-popover-foreground: #1a1a1a;
-  --color-muted: #f3f4f6;
-  --color-muted-foreground: #6b7280;
-  --color-placeholder: #9ca3af;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: #d81b40;
+  --color-popover-foreground: #0f1b3d;
+  --color-muted: #eef1f6;
+  --color-muted-foreground: #5b6a85;
+  --color-placeholder: #94a3b8;
+  --color-border: #dde3ec;
+  --color-input: #dde3ec;
+  --color-ring: #3b6fa0;
 
-  /* Crimson — primary action, active nav, single hero number */
-  --color-accent: #d81b40;
-  --color-accent-foreground: #ffffff;
-  --color-primary: #d81b40;
+  /* Primary — deep navy */
+  --color-primary: #0f1b3d;
   --color-primary-foreground: #ffffff;
 
-  /* Secondary button surface */
-  --color-secondary: #ffffff;
-  --color-secondary-foreground: #1a1a1a;
+  /* Accent — institutional blue */
+  --color-accent: #1e3a5f;
+  --color-accent-foreground: #ffffff;
 
-  /* Status — small indicators only */
-  --color-success: #2e7d32;
+  /* Secondary surface */
+  --color-secondary: #ffffff;
+  --color-secondary-foreground: #0f1b3d;
+
+  /* Sidebar — slightly darker rail */
+  --color-sidebar: #0f1b3d;
+  --color-sidebar-foreground: #e8edf3;
+  --color-sidebar-border: #1c2a4e;
+  --color-sidebar-accent: #1e3a5f;
+  --color-sidebar-accent-foreground: #ffffff;
+  --color-sidebar-primary: #3b6fa0;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-ring: #3b6fa0;
+
+  /* Status indicators */
+  --color-success: #1f7a4d;
   --color-warning: #b7791f;
-  --color-danger: #c0392b;
-  --color-destructive: #c0392b;
+  --color-danger: #b03a2e;
+  --color-destructive: #b03a2e;
   --color-destructive-foreground: #ffffff;
 
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
     "Helvetica Neue", Arial, sans-serif;
+  --font-display:
+    "Outfit", "Figtree", ui-sans-serif, system-ui, sans-serif;
   --font-mono:
     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  --text-caption: 13px;
-  --text-caption--line-height: 20px;
-  --text-body: 15px;
-  --text-body--line-height: 24px;
-  --text-section: 18px;
-  --text-section--line-height: 26px;
-  --text-page-title: 22px;
-  --text-page-title--line-height: 30px;
+  --text-caption: 12px;
+  --text-caption--line-height: 18px;
+  --text-body: 14px;
+  --text-body--line-height: 22px;
+  --text-section: 16px;
+  --text-section--line-height: 24px;
+  --text-page-title: 24px;
+  --text-page-title--line-height: 32px;
+  --text-metric: 28px;
+  --text-metric--line-height: 32px;
 }
 
 :root,
@@ -74,15 +90,18 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 24px;
+    font-size: 14px;
+    line-height: 22px;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    letter-spacing: -0.005em;
   }
 
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
     font-weight: 500;
+    letter-spacing: -0.015em;
   }
 
   ::placeholder {
@@ -91,5 +110,16 @@
 
   .font-mono, code, kbd, samp, pre {
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Uppercase eyebrow utility, for enterprise section labels */
+  .eyebrow {
+    font-size: 11px;
+    line-height: 16px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: var(--color-muted-foreground);
   }
 }
