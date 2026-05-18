@@ -202,10 +202,9 @@ function TaskDetailPage() {
               <div className="mt-4 text-caption text-muted-foreground">
                 Focus areas
               </div>
-              <ul className="mt-2 space-y-2">
+              <ul className="mt-2 divide-y divide-border rounded-sm border border-border">
                 {(latestDebrief.improvement_items as string[]).map((it, i) => (
-                  <li key={i} className="flex gap-3 text-body">
-                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                  <li key={i} className="px-3 py-2 text-body text-foreground">
                     {it}
                   </li>
                 ))}
