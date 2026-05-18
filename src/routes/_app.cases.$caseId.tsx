@@ -97,12 +97,12 @@ function CaseDetailPage() {
               {data.industry}
             </div>
           </div>
-          {data.mode && (
+          {data.status && (
             <Badge
               variant="outline"
               className="rounded-sm border-border text-caption font-normal text-muted-foreground"
             >
-              {data.mode}
+              {data.status}
             </Badge>
           )}
         </div>
