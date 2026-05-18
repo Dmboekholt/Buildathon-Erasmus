@@ -14,7 +14,150 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      artifacts: {
+        Row: {
+          file_name: string
+          file_path: string
+          id: string
+          task_id: string
+          uploaded_at: string
+        }
+        Insert: {
+          file_name: string
+          file_path: string
+          id?: string
+          task_id: string
+          uploaded_at?: string
+        }
+        Update: {
+          file_name?: string
+          file_path?: string
+          id?: string
+          task_id?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "artifacts_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      debriefs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          elevenlabs_conversation_id: string | null
+          evaluation_json: Json | null
+          id: string
+          improvement_items: Json | null
+          questions_json: Json | null
+          status: string
+          task_id: string
+          transcript: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          elevenlabs_conversation_id?: string | null
+          evaluation_json?: Json | null
+          id?: string
+          improvement_items?: Json | null
+          questions_json?: Json | null
+          status?: string
+          task_id: string
+          transcript?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          elevenlabs_conversation_id?: string | null
+          evaluation_json?: Json | null
+          id?: string
+          improvement_items?: Json | null
+          questions_json?: Json | null
+          status?: string
+          task_id?: string
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debriefs_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          phone: string | null
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          phone?: string | null
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          phone?: string | null
+          role?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          assignee_id: string
+          created_at: string
+          description: string
+          due_at: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id: string
+          created_at?: string
+          description: string
+          due_at?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string
+          created_at?: string
+          description?: string
+          due_at?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

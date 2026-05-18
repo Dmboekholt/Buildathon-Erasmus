@@ -9,50 +9,138 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppRouteImport } from './routes/_app'
+import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppTasksIndexRouteImport } from './routes/_app.tasks.index'
+import { Route as ApiPublicElevenlabsWebhookRouteImport } from './routes/api/public/elevenlabs-webhook'
+import { Route as AppTasksTaskIdRouteImport } from './routes/_app.tasks.$taskId'
 
-const IndexRoute = IndexRouteImport.update({
+const AppRoute = AppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksIndexRoute = AppTasksIndexRouteImport.update({
+  id: '/tasks/',
+  path: '/tasks/',
+  getParentRoute: () => AppRoute,
+} as any)
+const ApiPublicElevenlabsWebhookRoute =
+  ApiPublicElevenlabsWebhookRouteImport.update({
+    id: '/api/public/elevenlabs-webhook',
+    path: '/api/public/elevenlabs-webhook',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AppTasksTaskIdRoute = AppTasksTaskIdRouteImport.update({
+  id: '/tasks/$taskId',
+  path: '/tasks/$taskId',
+  getParentRoute: () => AppRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/tasks/$taskId': typeof AppTasksTaskIdRoute
+  '/api/public/elevenlabs-webhook': typeof ApiPublicElevenlabsWebhookRoute
+  '/tasks/': typeof AppTasksIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/': typeof AppIndexRoute
+  '/tasks/$taskId': typeof AppTasksTaskIdRoute
+  '/api/public/elevenlabs-webhook': typeof ApiPublicElevenlabsWebhookRoute
+  '/tasks': typeof AppTasksIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_app': typeof AppRouteWithChildren
+  '/_app/': typeof AppIndexRoute
+  '/_app/tasks/$taskId': typeof AppTasksTaskIdRoute
+  '/api/public/elevenlabs-webhook': typeof ApiPublicElevenlabsWebhookRoute
+  '/_app/tasks/': typeof AppTasksIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/tasks/$taskId'
+    | '/api/public/elevenlabs-webhook'
+    | '/tasks/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/tasks/$taskId' | '/api/public/elevenlabs-webhook' | '/tasks'
+  id:
+    | '__root__'
+    | '/_app'
+    | '/_app/'
+    | '/_app/tasks/$taskId'
+    | '/api/public/elevenlabs-webhook'
+    | '/_app/tasks/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AppRoute: typeof AppRouteWithChildren
+  ApiPublicElevenlabsWebhookRoute: typeof ApiPublicElevenlabsWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/_app': {
+      id: '/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_app/': {
+      id: '/_app/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks/': {
+      id: '/_app/tasks/'
+      path: '/tasks'
+      fullPath: '/tasks/'
+      preLoaderRoute: typeof AppTasksIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/api/public/elevenlabs-webhook': {
+      id: '/api/public/elevenlabs-webhook'
+      path: '/api/public/elevenlabs-webhook'
+      fullPath: '/api/public/elevenlabs-webhook'
+      preLoaderRoute: typeof ApiPublicElevenlabsWebhookRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/tasks/$taskId': {
+      id: '/_app/tasks/$taskId'
+      path: '/tasks/$taskId'
+      fullPath: '/tasks/$taskId'
+      preLoaderRoute: typeof AppTasksTaskIdRouteImport
+      parentRoute: typeof AppRoute
     }
   }
 }
 
+interface AppRouteChildren {
+  AppIndexRoute: typeof AppIndexRoute
+  AppTasksTaskIdRoute: typeof AppTasksTaskIdRoute
+  AppTasksIndexRoute: typeof AppTasksIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppIndexRoute: AppIndexRoute,
+  AppTasksTaskIdRoute: AppTasksTaskIdRoute,
+  AppTasksIndexRoute: AppTasksIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AppRoute: AppRouteWithChildren,
+  ApiPublicElevenlabsWebhookRoute: ApiPublicElevenlabsWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

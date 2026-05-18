@@ -70,16 +70,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Judgment ledger" },
+      { title: "BDO Coach" },
       {
         name: "description",
         content:
-          "Audit-grade decision records for finance teams. Log, review and defend material judgments.",
+          "Coaching debriefs for BDO junior consultants. Upload your work and get a short phone debrief on your thinking.",
       },
-      { property: "og:title", content: "Judgment ledger" },
+      { property: "og:title", content: "BDO Coach" },
       {
         property: "og:description",
-        content: "Audit-grade decision records for finance teams.",
+        content: "Coaching debriefs for BDO junior consultants.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
