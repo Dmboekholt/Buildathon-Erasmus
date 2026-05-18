@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConversationProvider, useConversation } from "@elevenlabs/react";
-import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
-import { getElevenLabsConversationToken } from "@/lib/elevenlabs.functions";
+
+const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID as string | undefined;
 
 type Props = {
   analystWork: unknown;
@@ -48,29 +48,24 @@ function ReviewSessionInner({ analystWork, company }: Props) {
     },
   });
 
-  const fetchToken = useServerFn(getElevenLabsConversationToken);
 
   const start = useCallback(async () => {
     setError(null);
     setHasEnded(false);
+    if (!AGENT_ID) {
+      setError("Agent is not configured.");
+      return;
+    }
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch {
       setError("Microphone access denied.");
       return;
     }
-    let token: string;
-    try {
-      const res = await fetchToken();
-      token = res.token;
-    } catch {
-      setError("Could not start session.");
-      return;
-    }
     try {
       setStarted(true);
       await conversation.startSession({
-        conversationToken: token,
+        agentId: AGENT_ID,
         connectionType: "webrtc",
         dynamicVariables: {
           analyst_work: JSON.stringify(analystWork),
@@ -81,7 +76,7 @@ function ReviewSessionInner({ analystWork, company }: Props) {
       setError("Could not start session.");
       setStarted(false);
     }
-  }, [analystWork, company, conversation, fetchToken]);
+  }, [analystWork, company, conversation]);
 
   const end = useCallback(async () => {
     try {
