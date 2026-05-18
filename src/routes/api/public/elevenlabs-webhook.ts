@@ -104,7 +104,7 @@ export const Route = createFileRoute("/api/public/elevenlabs-webhook")({
           await supabaseAdmin
             .from("debriefs")
             .update({
-              evaluation_json: evaluation,
+              evaluation_json: evaluation as any,
               improvement_items: improvements.improvement_items ?? [],
               status: "complete",
             })
