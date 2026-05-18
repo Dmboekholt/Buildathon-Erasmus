@@ -46,6 +46,51 @@ export type Database = {
           },
         ]
       }
+      cases: {
+        Row: {
+          assignee_id: string | null
+          company: string | null
+          created_at: string
+          due_at: string | null
+          id: string
+          industry: string | null
+          metadata: Json
+          priority: string
+          status: string
+          summary: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          company?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          industry?: string | null
+          metadata?: Json
+          priority?: string
+          status?: string
+          summary?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          company?: string | null
+          created_at?: string
+          due_at?: string | null
+          id?: string
+          industry?: string | null
+          metadata?: Json
+          priority?: string
+          status?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       debriefs: {
         Row: {
           completed_at: string | null
