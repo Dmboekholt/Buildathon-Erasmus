@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
 import { getCase } from "@/lib/cases.functions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { ReviewSession } from "@/components/case/ReviewSession";
 import {
   Table,
   TableBody,
