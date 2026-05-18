@@ -151,4 +151,16 @@
   .btn-bdo:hover {
     background-color: #b80419;
   }
+
+  /* Navy inline highlight for headlines */
+  .highlight-navy {
+    background-color: #1a2b4a;
+    color: #ffffff;
+    padding: 0 8px;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .text-navy {
+    color: #1a2b4a;
+  }
 }

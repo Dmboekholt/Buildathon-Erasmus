@@ -8,6 +8,7 @@ import {
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -16,6 +17,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import bdoLogo from "@/assets/bdo-logo.png";
 
 const items = [
   { title: "Analytics", url: "/", icon: BarChart3 },
