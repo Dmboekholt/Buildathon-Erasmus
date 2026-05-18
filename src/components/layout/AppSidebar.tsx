@@ -25,17 +25,17 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2 px-2 py-2">
+        <div className="flex items-center gap-2.5 px-2 py-3">
           <div
             aria-hidden="true"
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center bg-accent text-accent-foreground"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
           >
             <svg
               viewBox="0 0 24 24"
               className="h-4 w-4"
               fill="none"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="1.75"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
@@ -46,7 +46,7 @@ export function AppSidebar() {
             </svg>
           </div>
           <div className="leading-tight group-data-[collapsible=icon]:hidden">
-            <div className="text-body text-sidebar-foreground">
+            <div className="text-body font-medium text-sidebar-foreground">
               Judgment ledger
             </div>
             <div className="text-caption text-muted-foreground">
@@ -57,15 +57,21 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Workspace</SidebarGroupLabel>
+          <SidebarGroupLabel className="eyebrow px-2">
+            Workspace
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                    <Link to={item.url} className="flex items-center gap-2">
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isActive(item.url)}
+                    className="rounded-md"
+                  >
+                    <Link to={item.url} className="flex items-center gap-2.5">
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span className="text-body">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
