@@ -173,6 +173,7 @@ function InProgressCase({
   caseId: string;
   onExit: () => void;
   onSubmitted: (r: SubmitResult) => void;
+  onReseed: () => void;
 }) {
   const fetchCase = useServerFn(getCase);
   const submit = useServerFn(submitAttempt);
@@ -187,6 +188,7 @@ function InProgressCase({
 
   const allAnswered = useMemo(() => {
     if (!c) return false;
+    if (c.questions.length === 0) return false;
     return c.questions.every((q) => (answers[q.id] ?? "").trim().length > 0);
   }, [c, answers]);
 
@@ -203,6 +205,28 @@ function InProgressCase({
     return (
       <div className="rounded-lg border border-border bg-card p-8 text-body text-muted-foreground">
         Loading case.
+      </div>
+    );
+  }
+
+  if (c.questions.length === 0) {
+    return (
+      <div className="space-y-4">
+        <button
+          onClick={onExit}
+          className="text-caption text-muted-foreground hover:text-foreground"
+        >
+          ← Back to case list
+        </button>
+        <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-6">
+          <h3 className="text-section font-medium text-foreground">This case has no questions</h3>
+          <p className="mt-2 text-body text-muted-foreground">
+            Seed generation produced an incomplete case. Re-seed the library to regenerate every case with the full long-form structure.
+          </p>
+          <Button className="mt-4 rounded-pill" onClick={onReseed}>
+            Re-seed library
+          </Button>
+        </div>
       </div>
     );
   }
