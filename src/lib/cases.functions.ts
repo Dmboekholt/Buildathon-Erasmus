@@ -24,25 +24,3 @@ export const getCase = createServerFn({ method: "GET" })
     if (!row) throw notFound();
     return row;
   });
-
-export const createCase = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z.object({
-      title: z.string().min(1).max(255),
-      company: z.string().max(255).optional(),
-      industry: z.string().max(255).optional(),
-      summary: z.string().max(5000).optional(),
-      status: z.enum(["open", "in_review", "closed"]).optional(),
-      priority: z.enum(["low", "medium", "high"]).optional(),
-      due_at: z.string().datetime().optional(),
-    }).parse(input),
-  )
-  .handler(async ({ data }) => {
-    const { data: row, error } = await supabaseAdmin
-      .from("cases")
-      .insert(data)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return row;
-  });
