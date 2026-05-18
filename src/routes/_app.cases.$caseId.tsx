@@ -84,17 +84,25 @@ type Content = {
 function CaseDetailPage() {
   const { caseId } = Route.useParams();
   const fetchCase = useServerFn(getCase);
-  const { data, isLoading } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: ["case", caseId],
     queryFn: () => fetchCase({ data: { id: caseId } }),
   });
 
-  if (isLoading || !data) {
+  if (isPending) {
     return (
       <div className="mx-auto max-w-4xl px-8 py-12">
         <div className="text-caption text-muted-foreground">Loading…</div>
       </div>
     );
+  }
+
+  if (isError) {
+    return <CaseError error={error as Error} />;
+  }
+
+  if (!data) {
+    return <CaseNotFound />;
   }
 
   const content = (data.metadata ?? {}) as Content;

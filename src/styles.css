@@ -13,8 +13,8 @@
   --radius-lg: 16px;
   --radius-pill: 999px;
 
-  /* Surfaces — warm off-white, paper feel */
-  --color-background: #efeeea;
+  /* Surfaces — white page canvas */
+  --color-background: #ffffff;
   --color-foreground: #0a0a0a;
   --color-card: #ffffff;
   --color-card-foreground: #0a0a0a;
@@ -38,8 +38,8 @@
   --color-secondary: #ffffff;
   --color-secondary-foreground: #0a0a0a;
 
-  /* Sidebar — light, integrated rail */
-  --color-sidebar: #e9e8e3;
+  /* Sidebar — same white canvas as main */
+  --color-sidebar: #ffffff;
   --color-sidebar-foreground: #0a0a0a;
   --color-sidebar-border: #d9d8d2;
   --color-sidebar-accent: #ffffff;
