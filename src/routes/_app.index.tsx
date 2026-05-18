@@ -1,81 +1,51 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { listImprovements } from "@/lib/review.functions";
 
 export const Route = createFileRoute("/_app/")({
   component: AnalyticsPage,
 });
 
 type Category = "Decision Making" | "Insights" | "Judgement";
+type Priority = "High" | "Medium" | "Low";
 
 type Improvement = {
   id: string;
   title: string;
   area: string;
-  category: Category;
-  priority: "High" | "Medium" | "Low";
+  category: string;
+  priority: string;
 };
-
-const improvements: Improvement[] = [
-  {
-    id: "i1",
-    title: "Tighten revenue bridge assumptions",
-    area: "Financial analysis",
-    category: "Judgement",
-    priority: "High",
-  },
-  {
-    id: "i2",
-    title: "Probe management succession risk",
-    area: "Governance",
-    category: "Decision Making",
-    priority: "Medium",
-  },
-  {
-    id: "i3",
-    title: "Benchmark margin vs peer set",
-    area: "Market analysis",
-    category: "Insights",
-    priority: "Medium",
-  },
-  {
-    id: "i4",
-    title: "Expand downside scenario modelling",
-    area: "Risk",
-    category: "Judgement",
-    priority: "Low",
-  },
-  {
-    id: "i5",
-    title: "Document conviction triggers",
-    area: "Process",
-    category: "Decision Making",
-    priority: "High",
-  },
-  {
-    id: "i6",
-    title: "Map customer concentration shifts",
-    area: "Market analysis",
-    category: "Insights",
-    priority: "Low",
-  },
-];
 
 const categories: Category[] = ["Decision Making", "Insights", "Judgement"];
 
-const priorityWeight = { High: 3, Medium: 2, Low: 1 } as const;
+const priorityWeight: Record<Priority, number> = {
+  High: 3,
+  Medium: 2,
+  Low: 1,
+};
 
-function categoryScore(cat: Category) {
-  const items = improvements.filter((i) => i.category === cat);
+function categoryScore(items: Improvement[]) {
   if (items.length === 0) return 0;
-  const raw = items.reduce((sum, i) => sum + priorityWeight[i.priority], 0);
-  // Normalize to 0 to 100 using a notional max of 5 high priority items per category.
-  const score = Math.min(100, Math.round((raw / 15) * 100));
-  return score;
+  const raw = items.reduce(
+    (sum, i) => sum + (priorityWeight[i.priority as Priority] ?? 0),
+    0,
+  );
+  return Math.min(100, Math.round((raw / 15) * 100));
 }
 
 function AnalyticsPage() {
+  const fetchImprovements = useServerFn(listImprovements);
+  const { data } = useQuery({
+    queryKey: ["improvements"],
+    queryFn: () => fetchImprovements(),
+  });
+  const improvements: Improvement[] = data ?? [];
   return (
+
     <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
       {/* Hero */}
       <header className="mb-14 flex items-end justify-between gap-8">
@@ -125,8 +95,9 @@ function AnalyticsPage() {
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {categories.map((cat) => {
-            const score = categoryScore(cat);
-            const count = improvements.filter((i) => i.category === cat).length;
+            const catItems = improvements.filter((i) => i.category === cat);
+            const score = categoryScore(catItems);
+            const count = catItems.length;
             return (
               <div key={cat} className="flex flex-col gap-3">
                 <div className="flex items-baseline justify-between">

@@ -280,7 +280,7 @@ function CaseDetailPage() {
         </section>
       )}
 
-      <ReviewSession analystWork={data.metadata} company={data.company ?? ""} />
+      <ReviewSession analystWork={data.metadata} company={data.company ?? ""} caseId={caseId} />
     </div>
   );
 }
