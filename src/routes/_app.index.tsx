@@ -52,7 +52,7 @@ function DashboardPage() {
   const cases = data ?? [];
 
   return (
-    <div className="mx-auto max-w-[1280px] px-10 py-14">
+    <div className="mx-auto max-w-[1280px] px-12 py-16">
       {/* Hero */}
       <header className="mb-14 flex items-end justify-between gap-8">
         <div className="max-w-2xl">
@@ -105,8 +105,8 @@ function DashboardPage() {
       </div>
 
       {/* Two columns */}
-      <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-        <section className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+        <section className="flex flex-col gap-5">
           {isLoading ? (
             <div className="text-caption text-muted-foreground">Loading…</div>
           ) : cases.length === 0 ? (
@@ -114,77 +114,90 @@ function DashboardPage() {
               No cases yet.
             </div>
           ) : (
-            cases.map((c, idx) => (
-              <Link
-                key={c.id}
-                to="/cases/$caseId"
-                params={{ caseId: c.id }}
-                className="group block"
-              >
-                <article className="flex items-start gap-5 rounded-lg border border-border bg-card p-5 transition-colors hover:border-foreground/40">
-                  <div className="eyebrow shrink-0 pt-1">
-                    {String(idx + 1).padStart(2, "0")}.
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-3">
+            cases.map((c) => {
+              const priorityTone =
+                c.priority === "high"
+                  ? "border-foreground/40 text-foreground"
+                  : c.priority === "medium"
+                    ? "border-border text-muted-foreground"
+                    : "border-border text-muted-foreground/70";
+              return (
+                <Link
+                  key={c.id}
+                  to="/cases/$caseId"
+                  params={{ caseId: c.id }}
+                  className="group block"
+                >
+                  <article className="flex flex-col gap-5 rounded-lg border border-border bg-card p-7 transition-colors hover:border-foreground/40">
+                    <div className="flex items-start justify-between gap-4">
                       <h3 className="text-section font-medium text-foreground">
                         {c.title}
                       </h3>
-                      {c.status && (
+                      {c.priority && (
                         <Badge
                           variant="outline"
-                          className="shrink-0 rounded-pill border-border bg-background px-2.5 py-0.5 text-caption font-normal text-muted-foreground"
+                          className={`shrink-0 rounded-pill bg-background px-2.5 py-0.5 text-caption font-mono font-normal uppercase tracking-wider ${priorityTone}`}
                         >
-                          {c.status}
+                          {c.priority}
                         </Badge>
                       )}
                     </div>
-                    <div className="mt-1 text-body text-muted-foreground">
-                      {c.company} · {c.industry}
+
+                    <div className="space-y-1.5">
+                      <div className="text-caption font-medium text-foreground">
+                        {c.company}
+                      </div>
+                      <div className="text-caption text-muted-foreground">
+                        {c.industry}
+                      </div>
                     </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-caption text-muted-foreground">
-                        Priority{" "}
-                        <span className="font-mono text-foreground">
-                          {c.priority}
-                        </span>
-                      </span>
+
+                    {c.summary && (
+                      <p className="text-body leading-relaxed text-muted-foreground">
+                        {c.summary}
+                      </p>
+                    )}
+
+                    <div className="flex justify-end">
                       <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
                     </div>
-                  </div>
-                </article>
-              </Link>
-            ))
+                  </article>
+                </Link>
+              );
+            })
           )}
         </section>
 
-        <section className="flex flex-col gap-3">
-          {improvements.map((item, idx) => (
-            <article
-              key={item.id}
-              className="flex items-start gap-5 rounded-lg border border-border bg-card p-5"
-            >
-              <div className="eyebrow shrink-0 pt-1">
-                {String(idx + 1).padStart(2, "0")}.
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-3">
+        <section className="flex flex-col gap-5">
+          {improvements.map((item) => {
+            const priorityTone =
+              item.priority === "High"
+                ? "border-foreground/40 text-foreground"
+                : item.priority === "Medium"
+                  ? "border-border text-muted-foreground"
+                  : "border-border text-muted-foreground/70";
+            return (
+              <article
+                key={item.id}
+                className="flex flex-col gap-4 rounded-lg border border-border bg-card p-7"
+              >
+                <div className="flex items-start justify-between gap-4">
                   <h3 className="text-section font-medium text-foreground">
                     {item.title}
                   </h3>
                   <Badge
                     variant="outline"
-                    className="shrink-0 rounded-pill border-border bg-background px-2.5 py-0.5 text-caption font-normal text-muted-foreground"
+                    className={`shrink-0 rounded-pill bg-background px-2.5 py-0.5 text-caption font-mono font-normal uppercase tracking-wider ${priorityTone}`}
                   >
                     {item.priority}
                   </Badge>
                 </div>
-                <div className="mt-1 text-body text-muted-foreground">
+                <div className="text-caption text-muted-foreground">
                   {item.area}
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </section>
       </div>
     </div>
