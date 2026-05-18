@@ -63,10 +63,10 @@ async function callAIJson<T>(
 
 const QuestionSchema = z.object({
   id: z.string(),
-  prompt: z.string(),
-  expected_answer: z.string(),
-  senior_answer: z.string(),
-  ai_answer: z.string(),
+  prompt: z.string().min(20),
+  expected_answer: z.string().min(80),
+  senior_answer: z.string().min(80),
+  ai_answer: z.string().min(80),
 });
 export type CurriculumQuestion = z.infer<typeof QuestionSchema>;
 
@@ -75,18 +75,18 @@ const SeedCaseSchema = z.object({
   era: z.string(),
   industry: z.string(),
   difficulty: z.number().int().min(1).max(10),
-  case_text: z.string().min(1200),
-  questions: z.array(QuestionSchema).min(4).max(6),
+  case_text: z.string().min(1500),
+  questions: z.array(QuestionSchema).min(3).max(6),
 });
 const SeedSingleSchema = z.object({ case: SeedCaseSchema });
 
 const FAMOUS = [
   { title: "RJR Nabisco LBO bidding war", year: "1988", industry: "Consumer goods", difficulty: 4, focus: "leveraged buyout math, EV/EBITDA multiples, debt capacity, bidding dynamics between KKR and management" },
-  { title: "AOL Time Warner merger valuation", year: "2000", industry: "Media and internet", difficulty: 3, focus: "stock-for-stock merger, internet bubble multiples (EV/Sales, EV/Subscriber), synergy assumptions, dilution to Time Warner shareholders" },
+  { title: "AOL Time Warner merger valuation", year: "2000", industry: "Media and internet", difficulty: 3, focus: "stock-for-stock merger, internet bubble multiples, synergy assumptions, dilution to Time Warner shareholders" },
   { title: "Kraft Heinz 3G synergies", year: "2015", industry: "Consumer staples", difficulty: 4, focus: "zero-based budgeting, EBITDA multiple expansion, brand impairment risk, organic growth vs cost cuts" },
   { title: "Valeant Pharmaceuticals roll-up", year: "2015", industry: "Pharma", difficulty: 6, focus: "serial acquisitions, adjusted vs GAAP EBITDA, leverage ratio, specialty pharmacy channel risk" },
   { title: "WeWork S-1 valuation", year: "2019", industry: "Real estate / coworking", difficulty: 5, focus: "community adjusted EBITDA, lease liabilities vs revenue, contribution margin, comparable multiples vs IWG" },
-  { title: "Anheuser-Busch InBev leverage post SABMiller", year: "2016", industry: "Beverages", difficulty: 5, focus: "Net debt / EBITDA, FX exposure, synergy realization, dividend sustainability" },
+  { title: "Anheuser-Busch InBev leverage post SABMiller", year: "2016", industry: "Beverages", difficulty: 5, focus: "Net debt to EBITDA, FX exposure, synergy realization, dividend sustainability" },
   { title: "Lehman Brothers Repo 105", year: "2008", industry: "Investment banking", difficulty: 7, focus: "off-balance-sheet financing, leverage ratio window-dressing, mark-to-market on Alt-A and CDOs, funding fragility" },
   { title: "General Electric conglomerate discount", year: "2017", industry: "Industrials", difficulty: 5, focus: "sum-of-the-parts valuation, GE Capital insurance reserves, pension underfunding, dividend cover" },
 ];
