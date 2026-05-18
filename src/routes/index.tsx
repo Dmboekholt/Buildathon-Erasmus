@@ -1,63 +1,24 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { TopNav } from "@/components/layout/TopNav";
-import { MetricCard } from "@/components/ui/MetricCard";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { AppShell } from "@/components/layout/AppShell";
+import { listTasks, listImprovements } from "@/lib/tasks.functions";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: () => <AppShell />,
 });
 
-function Index() {
-  return (
-    <div className="min-h-screen bg-background">
-      <TopNav />
+// Index page renders inside <Outlet /> from AppShell? No — the route owns its
+// own layout. Re-using AppShell as a layout: see tasks routes for nested
+// pattern. For simplicity the Home page IS the AppShell with a body slot.
+// We mount the page via a child route. To keep this MVP simple, render
+// directly:
 
-      <main className="mx-auto max-w-[1200px] px-8 py-10">
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-page-title text-foreground">Dashboard</h1>
-          <span className="font-mono text-caption text-muted-foreground">
-            Period 2026-05-01 — 2026-05-18
-          </span>
-        </div>
+export const HomePage = HomeInner;
 
-        <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
-          <MetricCard
-            label="Open judgments"
-            value="42"
-            hint="7 awaiting review"
-          />
-          <MetricCard
-            label="Exposure under review"
-            value="$1,284,500"
-            emphasis
-            hint="Across 12 entities"
-          />
-          <MetricCard
-            label="Avg. resolution time"
-            value="6.3d"
-            hint="Down from 7.1d last period"
-          />
-        </section>
-
-        <section className="mt-10">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-section text-foreground">Recent judgments</h2>
-            <span className="text-caption text-muted-foreground">
-              Sorted by last update
-            </span>
-          </div>
-
-          <div className="mt-4 rounded-md border border-border bg-card">
-            <div className="flex flex-col items-center justify-center px-5 py-16">
-              <p className="text-body text-muted-foreground">
-                No judgments recorded yet.
-              </p>
-              <p className="mt-1 text-caption text-muted-foreground">
-                New entries will appear here once logged.
-              </p>
-            </div>
-          </div>
-        </section>
-      </main>
-    </div>
-  );
+function HomeInner() {
+  const router = useRouter();
+  void router;
+  return null;
 }
