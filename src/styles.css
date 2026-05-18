@@ -2,8 +2,8 @@
 @source "../src";
 
 /*
- * BDO Coach — design system.
- * Coaching-first, growth-focused. Calm surfaces, BDO red used sparingly.
+ * Judgment ledger — design system.
+ * Austere, enterprise financial software. Crimson used sparingly.
  * Hairline borders, generous whitespace, no shadows.
  */
 
@@ -12,35 +12,35 @@
   --radius-md: 12px;
   --radius-lg: 12px;
 
-  /* Surfaces — warmer, calmer than enterprise grey */
-  --color-background: #fafaf9;
-  --color-foreground: #1f1d1c;
+  /* Surfaces */
+  --color-background: #f9fafb;
+  --color-foreground: #1a1a1a;
   --color-card: #ffffff;
-  --color-card-foreground: #1f1d1c;
+  --color-card-foreground: #1a1a1a;
   --color-popover: #ffffff;
-  --color-popover-foreground: #1f1d1c;
-  --color-muted: #f4f3f1;
-  --color-muted-foreground: #6b6661;
-  --color-placeholder: #a8a39e;
-  --color-border: #e7e4e0;
-  --color-input: #e7e4e0;
-  --color-ring: #ee3124;
+  --color-popover-foreground: #1a1a1a;
+  --color-muted: #f3f4f6;
+  --color-muted-foreground: #6b7280;
+  --color-placeholder: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-input: #e5e7eb;
+  --color-ring: #d81b40;
 
-  /* BDO red — primary action, active nav, single hero number */
-  --color-accent: #ee3124;
+  /* Crimson — primary action, active nav, single hero number */
+  --color-accent: #d81b40;
   --color-accent-foreground: #ffffff;
-  --color-primary: #ee3124;
+  --color-primary: #d81b40;
   --color-primary-foreground: #ffffff;
 
   /* Secondary button surface */
   --color-secondary: #ffffff;
-  --color-secondary-foreground: #1f1d1c;
+  --color-secondary-foreground: #1a1a1a;
 
-  /* Soft status — coaching tone, never alarming */
-  --color-success: #4f7d4a;
-  --color-warning: #a87a2c;
-  --color-danger: #b15545;
-  --color-destructive: #b15545;
+  /* Status — small indicators only */
+  --color-success: #2e7d32;
+  --color-warning: #b7791f;
+  --color-danger: #c0392b;
+  --color-destructive: #c0392b;
   --color-destructive-foreground: #ffffff;
 
   --font-sans:

@@ -158,6 +158,42 @@ export type Database = {
           },
         ]
       }
+      work_products: {
+        Row: {
+          company: string | null
+          content: Json | null
+          created_at: string
+          id: string
+          industry: string | null
+          level: number | null
+          mode: string | null
+          slug: string | null
+          title: string | null
+        }
+        Insert: {
+          company?: string | null
+          content?: Json | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          level?: number | null
+          mode?: string | null
+          slug?: string | null
+          title?: string | null
+        }
+        Update: {
+          company?: string | null
+          content?: Json | null
+          created_at?: string
+          id?: string
+          industry?: string | null
+          level?: number | null
+          mode?: string | null
+          slug?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
