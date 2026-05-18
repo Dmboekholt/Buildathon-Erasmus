@@ -2,67 +2,79 @@
 @source "../src";
 
 /*
- * Judgment Ledger — design system.
- * Austere, enterprise financial software. Flat, restrained, evidence-led.
- * See DESIGN.md for the full specification. Do not deviate.
+ * Judgment ledger — Faseelh-inspired enterprise design system.
+ * Warm off-white background, near-black foreground, modern grotesk type,
+ * generous whitespace, black pill buttons. Hairline borders, no shadows.
  */
 
 @theme inline {
-  /* Radii — only two: 8px for controls, 12px for cards/panels */
   --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
 
-  /* Colors — semantic tokens, hex from the spec */
-  --color-background: #f9fafb;
-  --color-foreground: #1a1a1a;
+  /* Surfaces — warm off-white, paper feel */
+  --color-background: #efeeea;
+  --color-foreground: #0a0a0a;
   --color-card: #ffffff;
-  --color-card-foreground: #1a1a1a;
+  --color-card-foreground: #0a0a0a;
   --color-popover: #ffffff;
-  --color-popover-foreground: #1a1a1a;
-  --color-muted: #f9fafb;
-  --color-muted-foreground: #6b7280;
-  --color-placeholder: #9ca3af;
-  --color-border: #e5e7eb;
-  --color-input: #e5e7eb;
-  --color-ring: #d81b40;
+  --color-popover-foreground: #0a0a0a;
+  --color-muted: #e6e5e0;
+  --color-muted-foreground: #6b6b67;
+  --color-placeholder: #a3a39e;
+  --color-border: #d9d8d2;
+  --color-input: #d9d8d2;
+  --color-ring: #0a0a0a;
 
-  /* Crimson accent — primary action, active nav/tab, single key number */
-  --color-accent: #d81b40;
-  --color-accent-foreground: #ffffff;
-  --color-primary: #d81b40;
+  /* Primary — pure black for pill buttons & active states */
+  --color-primary: #0a0a0a;
   --color-primary-foreground: #ffffff;
 
-  /* Secondary button surface — white with hairline border */
-  --color-secondary: #ffffff;
-  --color-secondary-foreground: #1a1a1a;
+  /* Accent — kept black for institutional feel */
+  --color-accent: #0a0a0a;
+  --color-accent-foreground: #ffffff;
 
-  /* Status — only for small result indicators */
-  --color-success: #2e7d32;
-  --color-warning: #b7791f;
-  --color-danger: #c0392b;
-  --color-destructive: #c0392b;
+  --color-secondary: #ffffff;
+  --color-secondary-foreground: #0a0a0a;
+
+  /* Sidebar — light, integrated rail */
+  --color-sidebar: #e9e8e3;
+  --color-sidebar-foreground: #0a0a0a;
+  --color-sidebar-border: #d9d8d2;
+  --color-sidebar-accent: #ffffff;
+  --color-sidebar-accent-foreground: #0a0a0a;
+  --color-sidebar-primary: #0a0a0a;
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-ring: #0a0a0a;
+
+  /* Status — small indicators only */
+  --color-success: #1f7a4d;
+  --color-warning: #a36a1a;
+  --color-danger: #a93226;
+  --color-destructive: #a93226;
   --color-destructive-foreground: #ffffff;
 
-  /* Type */
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+    "Inter Tight", "Inter", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display:
+    "Inter Tight", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono:
     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-  /* Four text styles only */
-  --text-caption: 13px;
-  --text-caption--line-height: 20px;
-  --text-body: 15px;
-  --text-body--line-height: 24px;
+  --text-caption: 12px;
+  --text-caption--line-height: 18px;
+  --text-body: 14px;
+  --text-body--line-height: 22px;
   --text-section: 18px;
   --text-section--line-height: 26px;
-  --text-page-title: 22px;
-  --text-page-title--line-height: 30px;
+  --text-page-title: 32px;
+  --text-page-title--line-height: 38px;
+  --text-display: 44px;
+  --text-display--line-height: 48px;
 }
 
-/* Dark mode intentionally mirrors light — enterprise stays light */
 :root,
 .dark {
   color-scheme: light;
@@ -78,33 +90,36 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
-    font-size: 15px;
-    line-height: 24px;
+    font-size: 14px;
+    line-height: 22px;
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    letter-spacing: -0.01em;
   }
 
-  /* Strip default heading weight — hierarchy comes from size + spacing only */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
     font-weight: 500;
+    letter-spacing: -0.025em;
   }
 
   ::placeholder {
     color: var(--color-placeholder);
   }
 
-  /* Tabular figures inside mono numerals */
-  .font-mono,
-  code,
-  kbd,
-  samp,
-  pre {
+  .font-mono, code, kbd, samp, pre {
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  /* Numbered eyebrow utility (01., 02., 03.) */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 18px;
+    letter-spacing: 0;
+    color: var(--color-muted-foreground);
+    font-weight: 400;
   }
 }

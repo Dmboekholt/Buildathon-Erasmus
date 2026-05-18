@@ -1,25 +1,44 @@
-type MetricCardProps = {
+export function MetricCard({
+  label,
+  value,
+  suffix,
+  delta,
+  hint,
+}: {
   label: string;
-  value: string;
+  value: string | number;
+  suffix?: string;
+  delta?: { value: string; tone?: "up" | "down" | "neutral" };
   hint?: string;
-  emphasis?: boolean;
-};
+}) {
+  const toneClass =
+    delta?.tone === "up"
+      ? "text-[color:var(--color-success)]"
+      : delta?.tone === "down"
+        ? "text-[color:var(--color-danger)]"
+        : "text-muted-foreground";
 
-export function MetricCard({ label, value, hint, emphasis = false }: MetricCardProps) {
   return (
-    <div className="rounded-md border border-border bg-card p-5">
-      <div className="text-caption text-muted-foreground">{label}</div>
-      <div
-        className={
-          "mt-3 font-mono text-[28px] leading-none " +
-          (emphasis ? "text-accent" : "text-foreground")
-        }
-      >
-        {value}
+    <div className="rounded-md border border-border bg-card px-5 py-4">
+      <div className="eyebrow">{label}</div>
+      <div className="mt-3 flex items-baseline gap-2">
+        <div className="font-mono text-[28px] leading-none text-foreground">
+          {value}
+          {suffix && (
+            <span className="ml-1 text-caption text-muted-foreground">
+              {suffix}
+            </span>
+          )}
+        </div>
+        {delta && (
+          <span className={`font-mono text-caption ${toneClass}`}>
+            {delta.value}
+          </span>
+        )}
       </div>
-      {hint ? (
-        <div className="mt-3 text-caption text-muted-foreground">{hint}</div>
-      ) : null}
+      {hint && (
+        <div className="mt-2 text-caption text-muted-foreground">{hint}</div>
+      )}
     </div>
   );
 }

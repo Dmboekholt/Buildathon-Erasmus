@@ -74,12 +74,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "Audit-grade decision records for finance teams. Log, review and defend material judgments.",
+          "Investment case reviews. Read the memorandum, then defend the judgment.",
       },
       { property: "og:title", content: "Judgment ledger" },
       {
         property: "og:description",
-        content: "Audit-grade decision records for finance teams.",
+        content: "Investment case reviews.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -94,7 +94,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
   }),

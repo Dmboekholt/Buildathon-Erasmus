@@ -1,84 +1,103 @@
-# Judgment Ledger — Design System & Initial Scaffold
-
 ## Goal
-Lock in an austere, enterprise-grade visual foundation before any feature work begins. Every future screen inherits from this system — no deviations.
 
-## 1. Direction & Artifact
+Pivot the project from "BDO Coach" (tasks + ElevenLabs debriefs) to **Judgment Ledger** — a case-review app for investment memoranda. Restore the original crimson design system, replace the sidebar shell with a top nav, and build `/cases` and `/cases/$caseId` backed by a new `work_products` table.
 
-- Treat this project as a **web app** (TanStack Start template via `add_artifact`).
-- Project name: **Judgment Ledger** — serious financial/audit tooling tone.
-- No consumer polish: no gradients, no shadows, no rounded hero blobs, no decorative color.
+The existing BDO tasks/debriefs feature, the ElevenLabs server functions, and the current Home/Tasks routes are removed. The Supabase tables `profiles`, `tasks`, `artifacts`, `debriefs` and the `task-artifacts` bucket are left in place (out of scope to drop) but no longer referenced by the app.
 
-## 2. Design Tokens (single source of truth)
+## 1. Design system — restore Judgment Ledger
 
-Tokens live in `src/index.css` as CSS variables and are mapped in `tailwind.config.ts`. Components must only reference semantic tokens, never raw hex.
+- Replace `DESIGN.md` with the uploaded crimson `#D81B40` version.
+- Update `src/styles.css` tokens: accent `#D81B40`, page bg `#F9FAFB`, card radius 12px, button radius 8px. Inter for UI, JetBrains Mono for all numbers/dates/IDs. Two weights only (400/500). Sentence case.
 
-### Color (HSL in CSS, hex equivalents shown)
-- `--accent: #D81B40` — crimson. Only: primary button, active nav/tab, single most-important number per screen.
-- `--foreground: #1A1A1A` — primary text
-- `--muted-foreground: #6B7280` — secondary text
-- `--placeholder: #9CA3AF` — hints / placeholders
-- `--background: #F9FAFB` — page background
-- `--card: #FFFFFF` — cards, panels
-- `--border: #E5E7EB` — every border and divider
-- Status (small indicators only): `--success #2E7D32`, `--warning #B7791F`, `--danger #C0392B`
-- No other colors. No gradients anywhere.
+## 2. Database
 
-### Typography
-- Font family: **Inter** (loaded via Google Fonts) for all UI text.
-- Mono family: **JetBrains Mono** with `ui-monospace` fallback — used for *every* number, score, percentage, date, ID code, even inline.
-- Exactly four text styles:
-  - `text-page-title` — 22px / weight 500
-  - `text-section` — 18px / weight 500
-  - `text-body` — 15px / weight 400
-  - `text-caption` — 13px / weight 400
-- Only weights 400 and 500 exist. Tailwind `font-semibold`/`font-bold` removed from usage.
-- Sentence case everywhere. No Title Case, no ALL CAPS, no `uppercase` utility.
+New migration:
 
-### Shape & surface
-- Borders: 1px hairline, `--border` only. Separation by border, not shadow.
-- No `shadow-*`, no `blur-*`, no `ring-*` glow utilities anywhere.
-- Radius: `--radius-sm: 8px` (buttons, inputs), `--radius-md: 12px` (cards, panels).
-- Card: white bg, 1px border, 12px radius, 20px internal padding.
+```sql
+create table public.work_products (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique,
+  title text,
+  company text,
+  industry text,
+  mode text check (mode in ('historical','current')),
+  level int default 1,
+  content jsonb,
+  created_at timestamptz not null default now()
+);
+alter table public.work_products enable row level security;
+create policy "Public read" on public.work_products for select using (true);
+```
 
-### Buttons (only two variants)
-- **Primary**: solid `#D81B40` background, white text, 8px radius, no shadow. Used once per screen.
-- **Secondary**: white bg, 1px `#E5E7EB` border, `#1A1A1A` text, 8px radius.
-- All other shadcn button variants (ghost gradient, outline color, etc.) removed/overridden.
+After migration is approved and types regenerate, seed the `thermanova` row via `supabase--insert` with the full JSON from the spec (slug, title, company, industry, mode=current, level=3, content=<full JSON>).
 
-### Spacing & layout
-- 8px base grid (Tailwind defaults already align).
-- Generous whitespace between sections (min 32–48px).
-- Hierarchy via size + spacing, never via color or weight.
-- Metric card pattern: small grey caption label on top, large mono number below.
+## 3. Shell — TopNav replaces AppShell
 
-### Navigation
-- Top nav bar:
-  - 30px crimson square (8px radius) logo mark with a white icon glyph
-  - App name "Judgment ledger" beside it (sentence case, 18px / 500)
-  - One-line grey subtitle underneath
-  - Tab/link active state: crimson text + crimson 2px underline
+- New `src/components/layout/TopNav.tsx`: 30px crimson square logo with white glyph, app name "Judgment ledger", grey subtitle "Investment case reviews". Tabs: **Dashboard** (→ `/`) and **Cases** (→ `/cases`). Active tab = crimson text + 2px crimson underline. No other tab styling.
+- New `src/components/ui/MetricCard.tsx`: small grey caption label on top, large monospaced number below; bordered white card. (Available for later use; not required on Cases screens but the spec calls out the component.)
+- Replace the `_app` layout: rename `src/routes/_app.tsx` to render `<TopNav />` + `<Outlet />`. Drop the sidebar entirely.
 
-## 3. Files to Create / Modify
+## 4. Routes
 
-- `src/index.css` — replace token block with the palette above; load Inter + JetBrains Mono; reset radius vars; remove dark mode color drift (keep dark vars equal to light for now since this is enterprise-light only).
-- `tailwind.config.ts` — extend `fontFamily.sans = ['Inter', ...]`, `fontFamily.mono = ['JetBrains Mono', 'ui-monospace', ...]`, add font-size tokens (`page-title`, `section`, `body`, `caption`), restrict `borderRadius` to `sm: 8px`, `md: 12px`.
-- `src/components/ui/button.tsx` — keep only `primary` (crimson) and `secondary` (white+border) variants; remove shadows and uppercase.
-- `src/components/layout/TopNav.tsx` — new component implementing the nav bar spec.
-- `src/components/ui/MetricCard.tsx` — new reusable metric card (caption label + mono number).
-- `src/pages/Index.tsx` — replace placeholder hero with an austere landing shell: TopNav + page title "Dashboard" + a row of 3 MetricCards using placeholder data + an empty "Recent judgments" section card. Demonstrates the system; no fake decoration.
-- `DESIGN.md` (project root) — written design document containing all rules above, so future changes have a canonical reference.
+- **`src/routes/_app.index.tsx`** (Dashboard, `/`): minimal placeholder — page title "Dashboard", caption "Investment case reviews", and a single primary link to "Browse cases" → `/cases`. (Spec keeps Dashboard but does not specify content.)
+- **`src/routes/_app.cases.index.tsx`** (`/cases`): server fn `listCases()` reads `id, slug, title, company, industry, mode, level` from `work_products`. Renders a responsive grid of shadcn `Card`s. Each card: title (section heading), company (body), industry (caption), a `Badge` for `mode`, and "Level N" with the N in JetBrains Mono. The entire card is a `<Link to="/cases/$caseId" params={{ caseId: id }}>`.
+- **`src/routes/_app.cases.$caseId.tsx`** (`/cases/:caseId`): server fn `getCase({ id })` returns one row. Render sections in order:
+  1. Header — title, company, industry, mode `Badge`.
+  2. Investment highlights — bulleted list of `content.investment_highlights_as_written` (text-only, plain list, no decorative icons per existing "no symbols" tooling — but spec said follow uploaded DESIGN.md which does not mention this; render as a simple `<ul>` with neutral list markers).
+  3. Company profile — `content.company_profile.description` + a small table of `divisions` (name, FY2024 revenue share).
+  4. Financials — shadcn `Table` of `content.financials.historical`: columns FY, Revenue, EBITDA, EBITDA margin. All numeric cells use JetBrains Mono. Show currency caption.
+  5. Decisions — group `content.decisions` by `section` (Forecast, Market, Growth Strategy, Risks, Valuation, SWOT). For each decision render only `claim` and `analyst_rationale_as_written`. **Never** render `examiner_note`, `weak_spot`, `coaching_priorities`, `scoring_dimensions`, `id`, or `section` fields as visible content.
+  6. Management — `content.management.summary` only.
+  7. Primary `Button`: "Start review session" (no `onClick`, `disabled={false}`, placeholder).
+- Delete or stub: `src/routes/_app.tasks.index.tsx`, `src/routes/_app.tasks.$taskId.tsx`, `src/routes/api/public/elevenlabs-webhook.ts`, `src/lib/tasks.functions.ts`, `src/lib/prompts.ts`, `src/lib/ai.server.ts`, `src/lib/demo.ts`. (Keeping the files orphaned risks build breakage from broken imports — safer to delete.)
 
-## 4. Out of scope (this step)
-- No data model, no auth, no backend, no Lovable Cloud yet.
-- No real features — only the visual foundation + one demonstration screen.
+## 5. Server functions
 
-## 5. Acceptance
-- Opening `/` shows the new TopNav, sentence-case page title, three metric cards with mono numbers, and an empty section card.
-- No shadows, no gradients, no bold weights, no non-palette colors in the rendered DOM.
-- `DESIGN.md` exists and matches the spec.
+New `src/lib/cases.functions.ts`:
 
-## Technical notes
-- Fonts loaded via `<link>` in `index.html` (Inter 400/500, JetBrains Mono 400/500) to avoid extra deps.
-- Status colors exposed as `text-success`, `text-warning`, `text-danger` utilities but used only inside small badge/indicator components later.
-- Dark mode disabled visually (tokens identical) — enterprise software stays light.
+```ts
+export const listCases = createServerFn({ method: "GET" }).handler(async () => {
+  const { data, error } = await supabaseAdmin
+    .from("work_products")
+    .select("id, slug, title, company, industry, mode, level")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+});
+
+export const getCase = createServerFn({ method: "GET" })
+  .inputValidator(z.object({ id: z.string().uuid() }).parse)
+  .handler(async ({ data }) => {
+    const { data: row, error } = await supabaseAdmin
+      .from("work_products")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!row) throw notFound();
+    return row;
+  });
+```
+
+`supabaseAdmin` is fine here because RLS allows public read anyway; using it keeps the call available from SSR with no session.
+
+## 6. Out of scope
+
+- Don't drop the old `tasks/profiles/artifacts/debriefs` tables or the storage bucket (the user can remove later).
+- Don't touch ElevenLabs secrets.
+- "Start review session" button does nothing yet.
+
+## Files touched
+
+- `DESIGN.md` (rewrite)
+- `src/styles.css` (revert tokens to crimson)
+- `src/components/layout/AppShell.tsx` (delete)
+- `src/components/layout/TopNav.tsx` (new)
+- `src/components/ui/MetricCard.tsx` (new)
+- `src/routes/_app.tsx` (use TopNav)
+- `src/routes/_app.index.tsx` (Dashboard placeholder)
+- `src/routes/_app.cases.index.tsx` (new)
+- `src/routes/_app.cases.$caseId.tsx` (new)
+- `src/routes/_app.tasks.*.tsx`, `src/routes/api/public/elevenlabs-webhook.ts`, `src/lib/tasks.functions.ts`, `src/lib/prompts.ts`, `src/lib/ai.server.ts`, `src/lib/demo.ts` (delete)
+- `src/lib/cases.functions.ts` (new)
+- New migration + seed insert for `work_products`
