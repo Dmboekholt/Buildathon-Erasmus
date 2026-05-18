@@ -24,7 +24,14 @@ function NavItem({
           : "text-muted-foreground hover:bg-muted hover:text-foreground",
       ].join(" ")}
     >
-      <Icon className={["h-4 w-4", active ? "text-accent" : ""].join(" ")} />
+      <span
+        className={[
+          "h-4 w-1 rounded-sm",
+          active ? "bg-accent" : "bg-transparent",
+        ].join(" ")}
+        aria-hidden="true"
+      />
+      <Icon className="h-4 w-4" />
       <span>{label}</span>
     </Link>
   );
