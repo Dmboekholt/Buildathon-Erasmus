@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, FolderOpen, GraduationCap } from "lucide-react";
+import { Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -14,16 +14,14 @@ import {
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
 
-const items = [
-  { title: "Analytics", url: "/", icon: BarChart3 },
-  { title: "Cases", url: "/cases", icon: FolderOpen },
-  { title: "Learning Curriculum", url: "/curriculum", icon: GraduationCap },
-];
+const items = [{ title: "Team", url: "/manager", icon: Users }];
 
-export function AppSidebar() {
+export function ManagerSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (url: string) =>
-    url === "/" ? pathname === "/" : pathname.startsWith(url);
+    url === "/manager"
+      ? pathname === "/manager"
+      : pathname.startsWith(url);
 
   return (
     <Sidebar collapsible="icon">
@@ -53,7 +51,7 @@ export function AppSidebar() {
               Judgment ledger
             </div>
             <div className="text-caption text-muted-foreground">
-              Investment case reviews
+              Manager workspace
             </div>
           </div>
         </div>
@@ -61,7 +59,7 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="eyebrow px-2">
-            Workspace
+            Oversight
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -84,7 +82,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <WorkspaceSwitcher mode="junior" />
+        <WorkspaceSwitcher mode="manager" />
       </SidebarFooter>
     </Sidebar>
   );

@@ -100,6 +100,8 @@ export type Database = {
           evaluation_json: Json | null
           id: string
           improvement_items: Json | null
+          junior_id: string | null
+          project_id: string | null
           questions_json: Json | null
           status: string
           task_id: string | null
@@ -113,6 +115,8 @@ export type Database = {
           evaluation_json?: Json | null
           id?: string
           improvement_items?: Json | null
+          junior_id?: string | null
+          project_id?: string | null
           questions_json?: Json | null
           status?: string
           task_id?: string | null
@@ -126,6 +130,8 @@ export type Database = {
           evaluation_json?: Json | null
           id?: string
           improvement_items?: Json | null
+          junior_id?: string | null
+          project_id?: string | null
           questions_json?: Json | null
           status?: string
           task_id?: string | null
@@ -147,6 +153,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          junior_id: string | null
           priority: string
           source_debrief_id: string | null
           status: string
@@ -158,6 +165,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
+          junior_id?: string | null
           priority?: string
           source_debrief_id?: string | null
           status?: string
@@ -169,6 +177,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          junior_id?: string | null
           priority?: string
           source_debrief_id?: string | null
           status?: string
@@ -184,6 +193,7 @@ export type Database = {
           id: string
           phone: string | null
           role: string
+          sector: string | null
         }
         Insert: {
           created_at?: string
@@ -191,6 +201,7 @@ export type Database = {
           id?: string
           phone?: string | null
           role?: string
+          sector?: string | null
         }
         Update: {
           created_at?: string
@@ -198,6 +209,121 @@ export type Database = {
           id?: string
           phone?: string | null
           role?: string
+          sector?: string | null
+        }
+        Relationships: []
+      }
+      project_members: {
+        Row: {
+          profile_id: string
+          project_id: string
+          role: string
+        }
+        Insert: {
+          profile_id: string
+          project_id: string
+          role: string
+        }
+        Update: {
+          profile_id?: string
+          project_id?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sector: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sector?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sector?: string | null
+        }
+        Relationships: []
+      }
+      score_snapshots: {
+        Row: {
+          debrief_id: string | null
+          decision_making_score: number
+          id: string
+          insights_score: number
+          judgement_score: number
+          junior_id: string
+          overall_score: number
+          project_id: string | null
+          rubric_version: string
+          scored_at: string
+        }
+        Insert: {
+          debrief_id?: string | null
+          decision_making_score: number
+          id?: string
+          insights_score: number
+          judgement_score: number
+          junior_id: string
+          overall_score: number
+          project_id?: string | null
+          rubric_version?: string
+          scored_at?: string
+        }
+        Update: {
+          debrief_id?: string | null
+          decision_making_score?: number
+          id?: string
+          insights_score?: number
+          judgement_score?: number
+          junior_id?: string
+          overall_score?: number
+          project_id?: string | null
+          rubric_version?: string
+          scored_at?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          profile_id: string
+          team_id: string
+        }
+        Insert: {
+          profile_id: string
+          team_id: string
+        }
+        Update: {
+          profile_id?: string
+          team_id?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          manager_id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          manager_id: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          manager_id?: string
+          name?: string
         }
         Relationships: []
       }

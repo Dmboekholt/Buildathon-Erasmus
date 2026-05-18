@@ -3,6 +3,7 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { getActiveJuniorId } from "@/hooks/use-workspace";
 import {
   saveDebrief,
   scoreDebrief,
@@ -62,7 +63,9 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
     setScoring(true);
     setError(null);
     try {
-      const { id } = await saveDebriefFn({ data: { caseId, transcript } });
+      const { id } = await saveDebriefFn({
+        data: { caseId, transcript, juniorId: getActiveJuniorId() },
+      });
       const result = await scoreDebriefFn({ data: { debriefId: id } });
       setEvaluation(result);
       queryClient.invalidateQueries({ queryKey: ["improvements"] });
@@ -230,8 +233,15 @@ function EvaluationCard({ evaluation }: { evaluation: EvaluationResult }) {
         <h3 className="text-section text-foreground">Review feedback</h3>
         <div className="font-mono text-section text-foreground">
           {evaluation.overall_score}
-          <span className="text-caption text-muted-foreground">/100</span>
+          <span className="text-caption text-muted-foreground">/10</span>
         </div>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-4 font-mono text-caption text-muted-foreground">
+        <span>
+          Decision: {evaluation.decision_making_score}/10
+        </span>
+        <span>Insights: {evaluation.insights_score}/10</span>
+        <span>Judgement: {evaluation.judgement_score}/10</span>
       </div>
       {evaluation.summary && (
         <p className="mt-3 text-body text-foreground">{evaluation.summary}</p>

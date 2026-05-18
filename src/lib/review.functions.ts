@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  getScoringPrompt,
+  SCORING_RUBRIC_VERSION,
+} from "@/config/scoring";
 
 const PRIORITY_ORDER = ["Low", "Medium", "High"] as const;
 type Priority = (typeof PRIORITY_ORDER)[number];
@@ -15,17 +19,20 @@ function bumpPriority(current: string, direction: "raise" | "lower"): Priority {
   return PRIORITY_ORDER[next];
 }
 
-export const listImprovements = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { data, error } = await supabaseAdmin
+export const listImprovements = createServerFn({ method: "GET" })
+  .inputValidator((input) =>
+    z.object({ juniorId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority, status, updated_at")
       .eq("status", "open")
+      .eq("junior_id", data.juniorId)
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return data ?? [];
-  },
-);
+    return rows ?? [];
+  });
 
 export const saveDebrief = createServerFn({ method: "POST" })
   .inputValidator((input) =>
@@ -33,6 +40,8 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .object({
         caseId: z.string().uuid(),
         transcript: z.string().min(1).max(200_000),
+        juniorId: z.string().uuid(),
+        projectId: z.string().uuid().optional(),
       })
       .parse(input),
   )
@@ -42,6 +51,8 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .insert({
         case_id: data.caseId,
         transcript: data.transcript,
+        junior_id: data.juniorId,
+        project_id: data.projectId ?? null,
         status: "pending",
       })
       .select("id")
@@ -51,7 +62,10 @@ export const saveDebrief = createServerFn({ method: "POST" })
   });
 
 const EvaluationSchema = z.object({
-  overall_score: z.number().min(0).max(100),
+  overall_score: z.number().min(0).max(10),
+  decision_making_score: z.number().min(0).max(10),
+  insights_score: z.number().min(0).max(10),
+  judgement_score: z.number().min(0).max(10),
   strengths: z.array(z.string()).max(10),
   gaps: z.array(z.string()).max(10),
   summary: z.string().max(2000),
@@ -93,7 +107,7 @@ export const scoreDebrief = createServerFn({ method: "POST" })
 
     const { data: debrief, error: dErr } = await supabaseAdmin
       .from("debriefs")
-      .select("id, transcript, case_id")
+      .select("id, transcript, case_id, junior_id, project_id")
       .eq("id", data.debriefId)
       .maybeSingle();
     if (dErr) throw new Error(dErr.message);
@@ -109,39 +123,21 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       caseContext = c;
     }
 
-    const { data: existing, error: iErr } = await supabaseAdmin
+    const improvementsQuery = supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority")
       .eq("status", "open");
+    if (debrief.junior_id) {
+      improvementsQuery.eq("junior_id", debrief.junior_id);
+    }
+    const { data: existing, error: iErr } = await improvementsQuery;
     if (iErr) throw new Error(iErr.message);
 
-    const systemPrompt = `You are a senior investment analyst reviewing a junior analyst's recorded debrief on a case. Score their performance and update the open coaching improvement items.
-
-Rules:
-- "overall_score": 0 to 100. Be honest. Average performance is around 60.
-- "improvement_updates": for each existing item, choose an action.
-  - "lower": analyst clearly demonstrated progress on this item, reduce its priority.
-  - "raise": analyst struggled or showed the same weakness, increase its priority.
-  - "resolve": analyst fully addressed this item, mark as done.
-  - "keep": no signal in this call, leave unchanged. Only include if there is meaningful evidence to comment on.
-- "new_improvements": surface fresh, specific coaching items revealed in this call that are not covered by existing items. Each must have title, area, category (one of Decision Making, Insights, Judgement), priority (High, Medium, Low).
-- Do not use em dashes or en dashes anywhere in your response.
-- Output strictly valid JSON matching the schema.`;
-
-    const userPayload = {
+    const { system, user } = getScoringPrompt({
       case: caseContext,
-      existing_improvements: existing ?? [],
+      existingImprovements: existing ?? [],
       transcript: debrief.transcript ?? "",
-    };
-
-    const schemaDescription = `{
-  "overall_score": number 0-100,
-  "strengths": string[],
-  "gaps": string[],
-  "summary": string,
-  "improvement_updates": [{ "id": "<existing uuid>", "action": "lower|raise|keep|resolve", "reason": string }],
-  "new_improvements": [{ "title": string, "area": string, "category": "Decision Making|Insights|Judgement", "priority": "High|Medium|Low" }]
-}`;
+    });
 
     const aiRes = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -154,11 +150,8 @@ Rules:
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            { role: "system", content: systemPrompt },
-            {
-              role: "user",
-              content: `Schema:\n${schemaDescription}\n\nData:\n${JSON.stringify(userPayload)}`,
-            },
+            { role: "system", content: system },
+            { role: "user", content: user },
           ],
           response_format: { type: "json_object" },
         }),
@@ -241,6 +234,7 @@ Rules:
         category: n.category,
         priority: n.priority,
         source_debrief_id: data.debriefId,
+        junior_id: debrief.junior_id,
       }));
       const { error, count } = await supabaseAdmin
         .from("improvements")
@@ -250,6 +244,9 @@ Rules:
 
     const evaluation = {
       overall_score: parsed.overall_score,
+      decision_making_score: parsed.decision_making_score,
+      insights_score: parsed.insights_score,
+      judgement_score: parsed.judgement_score,
       strengths: parsed.strengths,
       gaps: parsed.gaps,
       summary: parsed.summary,
@@ -267,6 +264,19 @@ Rules:
         },
       })
       .eq("id", data.debriefId);
+
+    if (debrief.junior_id) {
+      await supabaseAdmin.from("score_snapshots").insert({
+        debrief_id: data.debriefId,
+        junior_id: debrief.junior_id,
+        project_id: debrief.project_id,
+        overall_score: parsed.overall_score,
+        decision_making_score: parsed.decision_making_score,
+        insights_score: parsed.insights_score,
+        judgement_score: parsed.judgement_score,
+        rubric_version: SCORING_RUBRIC_VERSION,
+      });
+    }
 
     return {
       ...parsed,

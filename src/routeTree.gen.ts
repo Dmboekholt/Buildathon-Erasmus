@@ -9,15 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ManagerRouteImport } from './routes/manager'
 import { Route as AppRouteImport } from './routes/_app'
+import { Route as ManagerIndexRouteImport } from './routes/manager/index'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
 import { Route as AppCurriculumRouteImport } from './routes/_app.curriculum'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
+import { Route as ManagerJuniorsJuniorIdRouteImport } from './routes/manager/juniors.$juniorId'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 
+const ManagerRoute = ManagerRouteImport.update({
+  id: '/manager',
+  path: '/manager',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/_app',
   getParentRoute: () => rootRouteImport,
+} as any)
+const ManagerIndexRoute = ManagerIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ManagerRoute,
 } as any)
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
@@ -34,6 +47,11 @@ const AppCasesIndexRoute = AppCasesIndexRouteImport.update({
   path: '/cases/',
   getParentRoute: () => AppRoute,
 } as any)
+const ManagerJuniorsJuniorIdRoute = ManagerJuniorsJuniorIdRouteImport.update({
+  id: '/juniors/$juniorId',
+  path: '/juniors/$juniorId',
+  getParentRoute: () => ManagerRoute,
+} as any)
 const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
   id: '/cases/$caseId',
   path: '/cases/$caseId',
@@ -42,50 +60,89 @@ const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/manager': typeof ManagerRouteWithChildren
   '/curriculum': typeof AppCurriculumRoute
+  '/manager/': typeof ManagerIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
+  '/manager/juniors/$juniorId': typeof ManagerJuniorsJuniorIdRoute
   '/cases/': typeof AppCasesIndexRoute
 }
 export interface FileRoutesByTo {
   '/curriculum': typeof AppCurriculumRoute
   '/': typeof AppIndexRoute
+  '/manager': typeof ManagerIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
+  '/manager/juniors/$juniorId': typeof ManagerJuniorsJuniorIdRoute
   '/cases': typeof AppCasesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/manager': typeof ManagerRouteWithChildren
   '/_app/curriculum': typeof AppCurriculumRoute
   '/_app/': typeof AppIndexRoute
+  '/manager/': typeof ManagerIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
+  '/manager/juniors/$juniorId': typeof ManagerJuniorsJuniorIdRoute
   '/_app/cases/': typeof AppCasesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/curriculum' | '/cases/$caseId' | '/cases/'
+  fullPaths:
+    | '/'
+    | '/manager'
+    | '/curriculum'
+    | '/manager/'
+    | '/cases/$caseId'
+    | '/manager/juniors/$juniorId'
+    | '/cases/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/curriculum' | '/' | '/cases/$caseId' | '/cases'
+  to:
+    | '/curriculum'
+    | '/'
+    | '/manager'
+    | '/cases/$caseId'
+    | '/manager/juniors/$juniorId'
+    | '/cases'
   id:
     | '__root__'
     | '/_app'
+    | '/manager'
     | '/_app/curriculum'
     | '/_app/'
+    | '/manager/'
     | '/_app/cases/$caseId'
+    | '/manager/juniors/$juniorId'
     | '/_app/cases/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  ManagerRoute: typeof ManagerRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/manager': {
+      id: '/manager'
+      path: '/manager'
+      fullPath: '/manager'
+      preLoaderRoute: typeof ManagerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_app': {
       id: '/_app'
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AppRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/manager/': {
+      id: '/manager/'
+      path: '/'
+      fullPath: '/manager/'
+      preLoaderRoute: typeof ManagerIndexRouteImport
+      parentRoute: typeof ManagerRoute
     }
     '/_app/': {
       id: '/_app/'
@@ -107,6 +164,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/cases/'
       preLoaderRoute: typeof AppCasesIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/manager/juniors/$juniorId': {
+      id: '/manager/juniors/$juniorId'
+      path: '/juniors/$juniorId'
+      fullPath: '/manager/juniors/$juniorId'
+      preLoaderRoute: typeof ManagerJuniorsJuniorIdRouteImport
+      parentRoute: typeof ManagerRoute
     }
     '/_app/cases/$caseId': {
       id: '/_app/cases/$caseId'
@@ -134,8 +198,22 @@ const AppRouteChildren: AppRouteChildren = {
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
+interface ManagerRouteChildren {
+  ManagerIndexRoute: typeof ManagerIndexRoute
+  ManagerJuniorsJuniorIdRoute: typeof ManagerJuniorsJuniorIdRoute
+}
+
+const ManagerRouteChildren: ManagerRouteChildren = {
+  ManagerIndexRoute: ManagerIndexRoute,
+  ManagerJuniorsJuniorIdRoute: ManagerJuniorsJuniorIdRoute,
+}
+
+const ManagerRouteWithChildren =
+  ManagerRoute._addFileChildren(ManagerRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  ManagerRoute: ManagerRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { listImprovements } from "@/lib/review.functions";
 
 export const Route = createFileRoute("/_app/")({
@@ -38,10 +39,11 @@ function categoryScore(items: Improvement[]) {
 }
 
 function AnalyticsPage() {
+  const juniorId = getActiveJuniorId();
   const fetchImprovements = useServerFn(listImprovements);
   const { data } = useQuery({
-    queryKey: ["improvements"],
-    queryFn: () => fetchImprovements(),
+    queryKey: ["improvements", juniorId],
+    queryFn: () => fetchImprovements({ data: { juniorId } }),
   });
   const improvements: Improvement[] = data ?? [];
   return (
