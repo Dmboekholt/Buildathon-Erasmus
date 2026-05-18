@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, FolderOpen } from "lucide-react";
+import { BarChart3, FolderOpen } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Analytics", url: "/", icon: BarChart3 },
   { title: "Cases", url: "/cases", icon: FolderOpen },
 ];
 
