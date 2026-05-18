@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { listCases } from "@/lib/cases.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Highlight } from "@/components/brand/Highlight";
 
 export const Route = createFileRoute("/_app/cases/")({
   component: CasesPage,

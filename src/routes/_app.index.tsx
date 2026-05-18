@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { listImprovements } from "@/lib/review.functions";
+import { Highlight } from "@/components/brand/Highlight";
 
 export const Route = createFileRoute("/_app/")({
   component: AnalyticsPage,
