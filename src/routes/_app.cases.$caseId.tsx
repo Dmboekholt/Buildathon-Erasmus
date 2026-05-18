@@ -16,7 +16,43 @@ import {
 
 export const Route = createFileRoute("/_app/cases/$caseId")({
   component: CaseDetailPage,
+  notFoundComponent: CaseNotFound,
+  errorComponent: CaseError,
 });
+
+function CaseNotFound() {
+  return (
+    <div className="mx-auto max-w-4xl px-8 py-12">
+      <Link
+        to="/cases"
+        className="mb-6 inline-flex items-center gap-2 text-caption text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        All cases
+      </Link>
+      <h1 className="text-page-title text-foreground">Case not found</h1>
+      <p className="mt-2 text-body text-muted-foreground">
+        This case may have been removed. Head back to the list to pick another.
+      </p>
+    </div>
+  );
+}
+
+function CaseError({ error }: { error: Error }) {
+  return (
+    <div className="mx-auto max-w-4xl px-8 py-12">
+      <Link
+        to="/cases"
+        className="mb-6 inline-flex items-center gap-2 text-caption text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        All cases
+      </Link>
+      <h1 className="text-page-title text-foreground">Something went wrong</h1>
+      <p className="mt-2 text-body text-muted-foreground">{error.message}</p>
+    </div>
+  );
+}
 
 type Division = { name: string; fy2024_revenue_share: string };
 type FinancialRow = {
