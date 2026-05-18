@@ -75,6 +75,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border">
+        <div className="flex flex-col gap-2 px-2 py-4 group-data-[collapsible=icon]:hidden">
+          <span className="eyebrow">Powered by</span>
+          <img src={bdoLogo} alt="BDO" className="h-5 w-auto object-contain" />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
