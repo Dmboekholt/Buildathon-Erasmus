@@ -67,7 +67,7 @@ export function TopNav() {
         </div>
 
         <nav className="flex items-center gap-8">
-          <Tab to="/" label="Dashboard" active={isDashboard} />
+          <Tab to="/" label="Analytics" active={isAnalytics} />
           <Tab to="/cases" label="Cases" active={isCases} />
         </nav>
       </div>
