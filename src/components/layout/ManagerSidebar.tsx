@@ -81,7 +81,7 @@ export function ManagerSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="mt-auto">
         <WorkspaceSwitcher mode="manager" />
       </SidebarFooter>
     </Sidebar>
