@@ -1,5 +1,12 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, FolderOpen, GraduationCap } from "lucide-react";
+import {
+  BarChart3,
+  FolderOpen,
+  GraduationCap,
+  BookOpen,
+  Upload,
+  LayoutDashboard,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -10,18 +17,27 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 
 const items = [
   { title: "Analytics", url: "/", icon: BarChart3 },
   { title: "Cases", url: "/cases", icon: FolderOpen },
-  { title: "Learning Curriculum", url: "/curriculum", icon: GraduationCap },
+];
+
+const curriculumChildren = [
+  { title: "Challenge", url: "/curriculum", icon: BookOpen },
+  { title: "Senior Upload", url: "/curriculum/upload", icon: Upload },
+  { title: "Manager Dashboard", url: "/curriculum/manager", icon: LayoutDashboard },
 ];
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isActive = (url: string) =>
-    url === "/" ? pathname === "/" : pathname.startsWith(url);
+    url === "/" ? pathname === "/" : pathname === url;
+  const inCurriculum = pathname.startsWith("/curriculum");
 
   return (
     <Sidebar collapsible="icon">
@@ -77,6 +93,32 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={inCurriculum}
+                  className="rounded-md"
+                >
+                  <Link to="/curriculum" className="flex items-center gap-2.5">
+                    <GraduationCap className="h-4 w-4" />
+                    <span className="text-body">Learning Curriculum</span>
+                  </Link>
+                </SidebarMenuButton>
+                {inCurriculum && (
+                  <SidebarMenuSub>
+                    {curriculumChildren.map((child) => (
+                      <SidebarMenuSubItem key={child.url}>
+                        <SidebarMenuSubButton asChild isActive={pathname === child.url}>
+                          <Link to={child.url} className="flex items-center gap-2">
+                            <child.icon className="h-3.5 w-3.5" />
+                            <span>{child.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
+                )}
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
