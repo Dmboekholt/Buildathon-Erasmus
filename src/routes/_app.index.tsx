@@ -37,7 +37,7 @@ function HomePage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2">
+      <div className="grid grid-cols-1 items-start gap-8 md:grid-cols-2 md:gap-16">
         <section>
           <div className="mb-4 flex items-baseline justify-between">
             <h2 className="text-section text-foreground">Tasks</h2>
