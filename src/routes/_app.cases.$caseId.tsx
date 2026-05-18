@@ -61,7 +61,7 @@ function CaseDetailPage() {
     );
   }
 
-  const content = (data.content ?? {}) as Content;
+  const content = (data.metadata ?? {}) as Content;
   const highlights = content.investment_highlights_as_written ?? [];
   const profile = content.company_profile;
   const divisions = profile?.divisions ?? [];
