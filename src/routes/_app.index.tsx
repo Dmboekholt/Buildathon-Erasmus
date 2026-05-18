@@ -95,8 +95,9 @@ function AnalyticsPage() {
         </div>
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {categories.map((cat) => {
-            const score = categoryScore(cat);
-            const count = improvements.filter((i) => i.category === cat).length;
+            const catItems = improvements.filter((i) => i.category === cat);
+            const score = categoryScore(catItems);
+            const count = catItems.length;
             return (
               <div key={cat} className="flex flex-col gap-3">
                 <div className="flex items-baseline justify-between">
