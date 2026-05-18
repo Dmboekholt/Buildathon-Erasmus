@@ -1,60 +1,67 @@
 ## Goal
-Wire the existing "Start review session" button on `/cases/$caseId` to start a live ElevenLabs voice conversation, without altering the rest of the page or the design system.
 
-## Steps
+When a review session ends, capture the transcript, send it to an LLM for scoring, show the result inline on the case page, and update the home page Improvements list (adjust priority, append new ones).
 
-### 1. Dependency and env
-- Install `@elevenlabs/react` via `bun add @elevenlabs/react`.
-- Append `VITE_ELEVENLABS_AGENT_ID=""` to `.env` so the user can fill in the value.
+## 1. Database
 
-### 2. New component: `src/components/case/ReviewSession.tsx`
-Client-only voice session UI. Receives props `{ analystWork: unknown; company: string }`.
+New `improvements` table (replaces hardcoded list in `_app.index.tsx`):
 
-- Imports `useConversation` from `@elevenlabs/react` and `Button` from `@/components/ui/button`.
-- SSR guard: render nothing until a `mounted` state flips true inside `useEffect`. This prevents the hook's microphone / WebRTC code paths from running on the server.
-- Local state:
-  - `transcript: Array<{ role: string; text: string; at: number }>` populated from the hook's `onMessage` callback (kept in state only, not rendered, per spec).
-  - `error: string | null` for inline error display.
-- `useConversation({ onMessage, onError, onDisconnect })`:
-  - `onMessage` pushes message info into `transcript`.
-  - `onError` sets `error` to "Connection failed. Please try again."
-- `startSession` handler:
-  1. Reads `agentId = import.meta.env.VITE_ELEVENLABS_AGENT_ID`. If missing, set error and stop.
-  2. `await navigator.mediaDevices.getUserMedia({ audio: true })` inside try/catch; on failure set error to "Microphone access denied." and stop.
-  3. `await conversation.startSession({ agentId, connectionType: "webrtc", dynamicVariables: { analyst_work: JSON.stringify(analystWork), company } })`. On throw set error to "Could not start session.".
-- `endSession` handler calls `await conversation.endSession()`.
-- Render logic:
-  - If `conversation.status === "disconnected"` and no session has started yet: render the existing-style primary button "Start review session" (`bg-accent text-accent-foreground hover:bg-accent/90`), and the inline error text below it (`text-caption text-destructive`) when set.
-  - Otherwise render a call panel using existing tokens (`rounded-md border border-border bg-card px-5 py-5`) containing:
-    - Status line (`text-caption text-muted-foreground`): "Connecting." while `status !== "connected"`, "In session." while connected, "Ended." after disconnect (track via local `hasEnded` state set in `onDisconnect`).
-    - Subtle speaking indicator: a small dot (`h-1.5 w-1.5 rounded-full bg-foreground`) with `animate-pulse` shown only when `conversation.isSpeaking`, paired with the muted-foreground label "Agent speaking.".
-    - Primary "End session" button (same accent styling) wired to `endSession`. After end, swap to a secondary "Start new session" button that resets state.
-    - Inline error text below when `error` is set.
-- All copy uses periods, no em-dashes or en-dashes.
+- `id` uuid pk
+- `title` text
+- `area` text
+- `category` text  (Decision Making | Insights | Judgement)
+- `priority` text  (High | Medium | Low)
+- `status` text default `'open'`  (open | resolved)
+- `source_debrief_id` uuid nullable
+- `created_at`, `updated_at` timestamps
 
-### 3. Edit `src/routes/_app.cases.$caseId.tsx`
-- Replace the bottom block:
-  ```tsx
-  <div>
-    <Button className="bg-accent text-accent-foreground hover:bg-accent/90">
-      Start review session
-    </Button>
-  </div>
-  ```
-  with `<ReviewSession analystWork={data.metadata} company={data.company} />`.
-- Remove the now-unused `Button` import only if no other usage remains (it will be unused after this change).
-- Do not touch any other section. `examiner_note`, `weak_spot`, and `coaching_priorities` were never rendered and remain unrendered; they ride along inside `analyst_work` via `JSON.stringify(data.metadata)`.
+Seed with the 6 items currently hardcoded.
 
-### 4. Verification
-- Run the typecheck implicitly via the harness build.
-- Confirm by reading the changed files that no other styles, fonts, or components were modified.
+Reuse existing `debriefs` table for transcript + evaluation:
+- `transcript` text: full plain-text transcript
+- `evaluation_json` jsonb: `{ overall_score, strengths[], gaps[], summary }`
+- `improvement_items` jsonb: snapshot of LLM proposed updates
+- `status`: pending -> scored
+- Add `case_id uuid` column so a debrief is tied to its case (today only `task_id` exists).
 
-## Out of scope
-- No server token endpoint. We use direct `agentId` connection per spec ("connecting by agentId"). If the ElevenLabs agent requires auth later, we will add a server function then.
-- No persistence of transcript yet; it stays in component state for a later step.
-- No new design tokens or component variants.
+## 2. Server functions (`src/lib/review.functions.ts`)
+
+- `saveDebrief({ caseId, transcript })`: inserts a `debriefs` row, returns id.
+- `scoreDebrief({ debriefId })`:
+  - loads debrief + case metadata + current open improvements
+  - calls Lovable AI Gateway (`google/gemini-3-flash-preview`) with structured output:
+    ```
+    { overall_score: 0-100, strengths: string[], gaps: string[], summary: string,
+      improvement_updates: [{ id?, action: "lower"|"raise"|"keep"|"resolve", reason }],
+      new_improvements: [{ title, area, category, priority }] }
+    ```
+  - applies updates: adjusts `priority` (one step up/down), marks resolved, inserts new rows (tagged with `source_debrief_id`)
+  - writes `evaluation_json` + `improvement_items` back to debrief, status -> scored
+- `getLatestDebriefForCase({ caseId })`: for the inline result panel.
+- `listImprovements()`: for the home page.
+
+## 3. ReviewSession component
+
+- Capture transcript exactly as today, but on `End session`:
+  1. Format `transcriptRef.current` into a readable string (`role: text` per line).
+  2. Call `saveDebrief`, then `scoreDebrief`.
+  3. While running, show "Scoring..."; on success render a result card with score, strengths, gaps, summary, and the list of improvement changes applied. On error show retry.
+
+## 4. Home page
+
+`_app.index.tsx` currently uses a hardcoded `improvements` array. Switch to:
+- `useQuery(['improvements'], listImprovements)` filtered to `status = 'open'`.
+- Keep the existing category grouping + score visual. No layout change.
+
+## 5. Out of scope
+
+- No new dedicated debrief page.
+- No transcript display UI beyond raw text in DB.
+- No auth/RLS changes (project uses demo-open policies today, mirror that on the new table).
 
 ## Technical notes
-- `import.meta.env.VITE_ELEVENLABS_AGENT_ID` is read at module/component scope only inside the click handler so a missing value doesn't crash render.
-- The component is the SSR boundary. Even though TanStack Start SSRs route components, the `mounted` gate ensures `useConversation`'s browser APIs are only exercised client-side.
-- The current `@elevenlabs/react` `useConversation().startSession` accepts `{ agentId, connectionType, dynamicVariables }`; this matches the knowledge file examples for public agents.
+
+- Use Lovable AI Gateway via the AI SDK pattern in tanstack server functions; `LOVABLE_API_KEY` is already set.
+- Use AI SDK `Output.object` with Zod schema for reliable structured output.
+- Adjustment rule: `lower` moves High to Medium to Low (Low resolves only via `resolve`); `raise` moves Low to Medium to High.
+- New improvements default to `status='open'` and `source_debrief_id` set.

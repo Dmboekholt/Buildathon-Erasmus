@@ -93,6 +93,7 @@ export type Database = {
       }
       debriefs: {
         Row: {
+          case_id: string | null
           completed_at: string | null
           created_at: string
           elevenlabs_conversation_id: string | null
@@ -101,10 +102,11 @@ export type Database = {
           improvement_items: Json | null
           questions_json: Json | null
           status: string
-          task_id: string
+          task_id: string | null
           transcript: string | null
         }
         Insert: {
+          case_id?: string | null
           completed_at?: string | null
           created_at?: string
           elevenlabs_conversation_id?: string | null
@@ -113,10 +115,11 @@ export type Database = {
           improvement_items?: Json | null
           questions_json?: Json | null
           status?: string
-          task_id: string
+          task_id?: string | null
           transcript?: string | null
         }
         Update: {
+          case_id?: string | null
           completed_at?: string | null
           created_at?: string
           elevenlabs_conversation_id?: string | null
@@ -125,7 +128,7 @@ export type Database = {
           improvement_items?: Json | null
           questions_json?: Json | null
           status?: string
-          task_id?: string
+          task_id?: string | null
           transcript?: string | null
         }
         Relationships: [
@@ -137,6 +140,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      improvements: {
+        Row: {
+          area: string
+          category: string
+          created_at: string
+          id: string
+          priority: string
+          source_debrief_id: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          area: string
+          category: string
+          created_at?: string
+          id?: string
+          priority?: string
+          source_debrief_id?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string
+          category?: string
+          created_at?: string
+          id?: string
+          priority?: string
+          source_debrief_id?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
