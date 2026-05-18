@@ -128,7 +128,7 @@ function DashboardPage() {
                   params={{ caseId: c.id }}
                   className="group block"
                 >
-                  <article className="flex flex-col gap-5 rounded-lg border border-border bg-card p-7 transition-colors hover:border-foreground/40">
+                  <article className="flex flex-col gap-3 rounded-lg border border-border bg-card p-5 transition-colors hover:border-foreground/40">
                     <div className="flex items-start justify-between gap-4">
                       <h3 className="text-section font-medium text-foreground">
                         {c.title}
@@ -172,9 +172,9 @@ function DashboardPage() {
                   ? "border-border text-muted-foreground"
                   : "border-border text-muted-foreground/70";
             return (
-              <article
+            <article
                 key={item.id}
-                className="flex flex-col gap-4 rounded-lg border border-border bg-card p-7"
+                className="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-5"
               >
                 <div className="flex items-start justify-between gap-4">
                   <h3 className="text-section font-medium text-foreground">
