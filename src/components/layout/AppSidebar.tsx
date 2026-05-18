@@ -32,31 +32,18 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5 px-2 py-3">
+        <div className="flex items-center gap-3 px-2 py-4">
           <div
             aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
+            className="flex h-10 w-10 shrink-0 items-center justify-center bg-[#1a2b4a]"
           >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 3v18" />
-              <path d="M3 8h6" />
-              <path d="M3 14h6" />
-              <path d="M14 4h6l-3 6 3 0a3 3 0 1 1-6 0" />
-            </svg>
+            <span className="text-[13px] font-bold tracking-tight text-white">JL</span>
           </div>
           <div className="leading-tight group-data-[collapsible=icon]:hidden">
-            <div className="text-body font-medium text-sidebar-foreground">
-              Judgment ledger
+            <div className="text-[18px] font-bold uppercase tracking-tight text-[#1a2b4a]">
+              Judgment Ledger
             </div>
-            <div className="text-caption text-muted-foreground">
+            <div className="text-[12px] uppercase tracking-[0.08em] text-muted-foreground">
               Investment case reviews
             </div>
           </div>
@@ -74,11 +61,11 @@ export function AppSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive(item.url)}
-                    className="rounded-md"
+                    className="rounded-none font-bold uppercase tracking-[0.04em] text-[13px]"
                   >
                     <Link to={item.url} className="flex items-center gap-2.5">
                       <item.icon className="h-4 w-4" />
-                      <span className="text-body">{item.title}</span>
+                      <span>{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

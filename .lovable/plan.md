@@ -1,36 +1,55 @@
-## Fix learning curriculum cases
+## Goal
+Reskin the entire app to match BDO's bold, corporate, flat-rectangular identity. No code/feature changes — visuals only.
 
-### Root cause
-DB inspection shows every seeded case is 493-722 chars with `questions = []`. The InProgressCase view has nothing to render because there are no questions. Two things to fix: bad seed data, and a prompt that does not actually produce the structure we want.
+## 1. Design tokens (`src/styles.css`)
+Rewrite the `@theme` block with the BDO palette and typography:
 
-### 1. Clear bad seed data
-Migration: `DELETE FROM curriculum_attempts; DELETE FROM curriculum_cases WHERE source='seeded';` so the next visit re-seeds from scratch with the new prompt.
+- Colors:
+  - `--color-background: #FFFFFF`
+  - `--color-foreground: #1A1A1A`
+  - `--color-muted: #F2F2F2`, `--color-muted-foreground: #6B6B6B`
+  - `--color-placeholder: #9A9A9A`
+  - `--color-border / --color-input: #E4E4E4`
+  - `--color-primary: #E40521`, `--color-primary-foreground: #FFFFFF`
+  - `--color-accent: #E40521`
+  - `--color-secondary: #1A2B4A` (navy, for wordmark / strong accents)
+  - `--color-success: #2E7D32`, `--color-warning: #B7791F`
+  - Sidebar tokens aligned to white surface + red active
+- Radius: set all radius tokens to `0` (square corners everywhere).
+- Type scale:
+  - display 44/1.1 weight 700
+  - section 24 weight 700
+  - body 18/1.5 weight 400
+  - caption 14 weight 400 (`#6B6B6B`)
+- Font: load Archivo (400, 700) from Google Fonts via `__root.tsx` `<link>` tags, set `--font-sans` / `--font-display` to `"Archivo", "Inter", sans-serif`.
 
-### 2. Rewrite the seed prompt (`src/lib/curriculum.functions.ts`)
-Switch from one big blob to a strict section-based case structure. Each generated case must include all of:
-- **Background and deal context** (what is happening, who the players are, timeline)
-- **Financials** (revenue, EBITDA, margins, growth, leverage, multiples, share price/market cap, ideally a small text-table)
-- **Management and governance** (CEO, CFO, board dynamics, prior track record, incentives)
-- **Risks and red flags** (concrete signals an analyst could see at the time)
-- **Specific deal details** (price, structure, financing, comparables, covenants, synergies)
+Add base layer rules:
+- `body` font-size 18px, line-height 1.5, letter-spacing 0.
+- Headings weight 700, near-black, tight tracking.
+- New utility class `.eyebrow` → 14px, weight 700, uppercase, letter-spacing 0.08em, color `#E40521`.
+- New utility `.btn-bdo` (solid red, white uppercase 15px/700, letter-spacing 0.05em, padding 16px 32px, no radius) as a fallback for places not using the shadcn Button.
 
-Tighten:
-- `case_text` must be 1500+ characters, written as multiple labeled paragraphs (the section headers above appear inside `case_text`).
-- `questions` minimum 3, maximum 6, each with `id`, `prompt`, `expected_answer`, `senior_answer`, `ai_answer`.
-- At least 2 questions must require numerical reasoning, at least 1 must be about risk or pushback.
-- Generate one case at a time (already the pattern) so a single bad response does not kill the batch.
+## 2. Button + input primitives
+- `src/components/ui/button.tsx`: change default variant to solid `bg-primary text-primary-foreground uppercase tracking-[0.05em] font-bold`, remove rounded classes, set `rounded-none`, padding 16/32. Keep variants but strip radii and shadows in each.
+- `src/components/ui/input.tsx`, `textarea.tsx`, `select.tsx`, `card.tsx`, `dialog.tsx`, `badge.tsx`, `tabs.tsx`: replace any `rounded-*` with `rounded-none`, strip `shadow-*`. Cards use `bg-card border border-border p-8`, no shadow.
 
-### 3. Make seed failures visible
-- If `seedCurriculumIfEmpty` ends with `seeded === 0` and the DB is still empty, surface that on the Challenge page (instead of an empty cards grid with no signal) with a Retry button.
-- Log per-case failure reason on the server so we can see what the gateway returned.
+## 3. Layout chrome
+- `src/routes/__root.tsx`: inject Google Fonts `<link>` for Archivo 400/700; ensure body uses white bg.
+- `src/components/layout/AppSidebar.tsx` (top nav): white bg, charcoal links weight 700, active/hover red `#E40521`, inactive `#6B6B6B`. Logo wordmark in navy `#1A2B4A`, bold. Add a solid red CONTACT block top-right (white uppercase text, no radius, padding 16/32).
+- Add a reusable diagonal red accent block component used on hero/landing surfaces (`src/components/brand/DiagonalAccent.tsx`) — a `clip-path` red rectangle sliced diagonally.
 
-### 4. Defensive UI in `_app.curriculum.index.tsx`
-In `InProgressCase`, if `c.questions.length === 0` after load, render an explicit "This case is missing questions. Re-seed the library." block with a Re-seed action, so a future bad row never silently hides the form.
+## 4. Page surfaces
+Sweep each route (`_app.index`, `_app.cases.*`, `_app.curriculum.*`, `_app.manager`) and:
+- Replace gradients/glow/shadow utilities with flat surfaces.
+- Replace `rounded-*` with `rounded-none`.
+- Page titles → `text-[44px] font-bold leading-[1.1]`.
+- Section labels → `eyebrow` class (red uppercase).
+- Cards → `bg-[#F2F2F2] border border-border p-8`.
+- Primary CTAs → default Button (red).
+- Use the diagonal accent block on the home hero and curriculum hero only.
 
-### 5. Out of scope
-No schema changes beyond the data wipe. No new auth, no Manager Dashboard, no Senior Upload.
+## 5. QA
+- Visit `/`, `/cases`, `/curriculum`, `/manager` in the preview, screenshot each, verify: square corners, red CTAs, white bg, no shadows, Archivo loaded, eyebrows red uppercase.
 
-### Files touched
-- Migration: clear `curriculum_cases` (seeded) + `curriculum_attempts`.
-- `src/lib/curriculum.functions.ts`: rewrite seed prompt and validation; better error surface from seed.
-- `src/routes/_app.curriculum.index.tsx`: empty-state and missing-questions fallbacks.
+## Out of scope
+- No feature/logic changes. No content rewrites. Curriculum seeding logic untouched.
