@@ -66,7 +66,7 @@ function ReviewSessionInner({ analystWork, company }: Props) {
       setStarted(true);
       await conversation.startSession({
         agentId: AGENT_ID,
-        connectionType: "webrtc",
+        connectionType: "websocket",
         dynamicVariables: {
           analyst_work: JSON.stringify(analystWork),
           company,
