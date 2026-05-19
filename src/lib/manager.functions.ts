@@ -61,8 +61,8 @@ export const getJuniorProgress = createServerFn({ method: "GET" })
   .inputValidator((input) =>
     z
       .object({
-        managerId: z.string().uuid(),
-        juniorId: z.string().uuid(),
+        managerId: z.string().min(1),
+        juniorId: z.string().min(1),
         from: z.string().datetime().optional(),
         to: z.string().datetime().optional(),
       })
