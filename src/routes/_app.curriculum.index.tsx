@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
 
-import { getActiveJuniorId } from "@/hooks/use-workspace";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { listCurriculum } from "@/lib/curriculum.functions";
 
 export const Route = createFileRoute("/_app/curriculum/")({
@@ -26,7 +26,7 @@ function statusLabel(status: string) {
 }
 
 function CurriculumIndexPage() {
-  const juniorId = getActiveJuniorId();
+  const { juniorId } = useWorkspace();
   const fetchCurriculum = useServerFn(listCurriculum);
   const [yearFilter, setYearFilter] = useState<JuniorYear | null>(null);
 

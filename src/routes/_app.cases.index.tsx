@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getActiveJuniorId } from "@/hooks/use-workspace";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { listCases } from "@/lib/cases.functions";
 
 export const Route = createFileRoute("/_app/cases/")({
@@ -9,7 +9,7 @@ export const Route = createFileRoute("/_app/cases/")({
 });
 
 function CasesPage() {
-  const juniorId = getActiveJuniorId();
+  const { juniorId } = useWorkspace();
   const fetchCases = useServerFn(listCases);
   const { data, isLoading } = useQuery({
     queryKey: ["cases", juniorId],

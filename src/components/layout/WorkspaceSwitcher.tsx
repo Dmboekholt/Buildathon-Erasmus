@@ -2,12 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { LayoutDashboard, Users } from "lucide-react";
-import {
-  useWorkspace,
-  type WorkspaceMode,
-  getActiveJuniorId,
-  setWorkspaceMode,
-} from "@/hooks/use-workspace";
+import { useWorkspace, type WorkspaceMode } from "@/hooks/use-workspace";
 import { listManagers } from "@/lib/manager.functions";
 
 const JUNIOR_LABELS: Record<string, string> = {
@@ -18,8 +13,8 @@ const JUNIOR_LABELS: Record<string, string> = {
 
 export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
   const navigate = useNavigate();
-  const { managerId, selectManager, selectJunior } = useWorkspace();
-  const juniorId = getActiveJuniorId();
+  const { managerId, juniorId, selectManager, selectJunior, switchMode } =
+    useWorkspace();
   const fetchManagers = useServerFn(listManagers);
   const { data: managers } = useQuery({
     queryKey: ["managers"],
@@ -28,12 +23,12 @@ export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
   });
 
   const goToManager = () => {
-    setWorkspaceMode("manager");
+    switchMode("manager");
     navigate({ to: "/manager" });
   };
 
   const goToJunior = () => {
-    setWorkspaceMode("junior");
+    switchMode("junior");
     navigate({ to: "/" });
   };
 

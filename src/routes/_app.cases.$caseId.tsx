@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
-import { getActiveJuniorId } from "@/hooks/use-workspace";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { getCase } from "@/lib/cases.functions";
 import { Badge } from "@/components/ui/badge";
 import { ReviewSession } from "@/components/case/ReviewSession";
@@ -84,7 +84,7 @@ type Content = {
 
 function CaseDetailPage() {
   const { caseId } = Route.useParams();
-  const juniorId = getActiveJuniorId();
+  const { juniorId } = useWorkspace();
   const fetchCase = useServerFn(getCase);
   const { data, isPending, isError, error } = useQuery({
     queryKey: ["case", caseId, juniorId],

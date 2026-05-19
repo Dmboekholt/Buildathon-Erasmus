@@ -3,7 +3,7 @@ import { ConversationProvider, useConversation } from "@elevenlabs/react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { getActiveJuniorId } from "@/hooks/use-workspace";
+import { useWorkspace } from "@/hooks/use-workspace";
 import {
   saveDebrief,
   scoreDebrief,
@@ -33,6 +33,7 @@ export function ReviewSession(props: Props) {
 }
 
 function ReviewSessionInner({ analystWork, company, caseId }: Props) {
+  const { juniorId } = useWorkspace();
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasEnded, setHasEnded] = useState(false);
@@ -64,7 +65,7 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
     setError(null);
     try {
       const { id } = await saveDebriefFn({
-        data: { caseId, transcript, juniorId: getActiveJuniorId() },
+        data: { caseId, transcript, juniorId },
       });
       const result = await scoreDebriefFn({ data: { debriefId: id } });
       setEvaluation(result);
@@ -75,7 +76,7 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
     } finally {
       setScoring(false);
     }
-  }, [caseId, queryClient, saveDebriefFn, scoreDebriefFn]);
+  }, [caseId, juniorId, queryClient, saveDebriefFn, scoreDebriefFn]);
 
   const conversation = useConversation({
     onConnect: () => setError(null),

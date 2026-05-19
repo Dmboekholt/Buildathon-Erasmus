@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type WorkspaceMode = "junior" | "manager";
 
@@ -41,7 +48,18 @@ export function setActiveJuniorId(id: string) {
   localStorage.setItem(JUNIOR_KEY, id);
 }
 
-export function useWorkspace() {
+type WorkspaceContextValue = {
+  mode: WorkspaceMode;
+  managerId: string;
+  juniorId: string;
+  switchMode: (next: WorkspaceMode) => void;
+  selectManager: (id: string) => void;
+  selectJunior: (id: string) => void;
+};
+
+const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
+
+export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<WorkspaceMode>("junior");
   const [managerId, setManagerId] = useState(DEFAULT_MANAGER);
   const [juniorId, setJuniorId] = useState(DEFAULT_JUNIOR);
@@ -67,12 +85,26 @@ export function useWorkspace() {
     setJuniorId(id);
   }, []);
 
-  return {
-    mode,
-    managerId,
-    juniorId,
-    switchMode,
-    selectManager,
-    selectJunior,
-  };
+  return (
+    <WorkspaceContext.Provider
+      value={{
+        mode,
+        managerId,
+        juniorId,
+        switchMode,
+        selectManager,
+        selectJunior,
+      }}
+    >
+      {children}
+    </WorkspaceContext.Provider>
+  );
+}
+
+export function useWorkspace() {
+  const ctx = useContext(WorkspaceContext);
+  if (!ctx) {
+    throw new Error("useWorkspace must be used within WorkspaceProvider");
+  }
+  return ctx;
 }
