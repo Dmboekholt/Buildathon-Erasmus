@@ -9,7 +9,7 @@ export function BdoLogo({ className }: Props) {
     <img
       src={bdoLogoSrc}
       alt="BDO"
-      className={`h-7 w-auto ${className ?? ""}`}
+      className={`h-7 w-auto object-contain ${className ?? ""}`}
     />
   );
 }
