@@ -17,10 +17,10 @@ export function PageCtaBanner({
   linkLabel,
 }: PageCtaBannerProps) {
   return (
-    <section className="mt-12 flex flex-col items-start justify-between gap-6 rounded-lg border border-border bg-card px-8 py-6 sm:flex-row sm:items-center">
+    <section className="mt-12 flex flex-col items-start justify-between gap-6 rounded-xl border border-primary/20 bg-primary/10 px-8 py-6 sm:flex-row sm:items-center">
       <div className="flex items-center gap-4">
         <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fce4ec]"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card"
           aria-hidden
         >
           <Icon className="h-5 w-5 text-primary" />

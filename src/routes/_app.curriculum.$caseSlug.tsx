@@ -540,11 +540,11 @@ function CurriculumCasePage() {
       )}
 
       {!result && (
-        <section className="overflow-hidden rounded-lg border border-[#fce4ec] bg-[#fce4ec]/40">
+        <section className="rounded-xl border border-primary/20 bg-primary/10">
           <div className="flex items-center justify-between gap-6 px-8 py-6">
             <div className="flex items-center gap-4">
               <div
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fce4ec]"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-card"
                 aria-hidden
               >
                 <Target className="h-5 w-5 text-primary" />
@@ -558,7 +558,6 @@ function CurriculumCasePage() {
                 </p>
               </div>
             </div>
-            <MountainIllustration />
           </div>
         </section>
       )}
