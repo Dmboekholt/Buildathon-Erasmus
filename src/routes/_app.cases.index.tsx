@@ -29,6 +29,9 @@ function CasesPage() {
         <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
           Available for review
         </h1>
+        <p className="mt-2 max-w-2xl text-caption text-muted-foreground">
+          Memoranda and engagements assigned for voice review.
+        </p>
       </header>
 
       <section>
@@ -36,9 +39,9 @@ function CasesPage() {
           Memoranda and engagements
         </h2>
         {isLoading ? (
-          <p className="text-caption text-muted-foreground">Loading…</p>
+          <p className="text-[14px] text-muted-foreground">Loading…</p>
         ) : cases.length === 0 ? (
-          <p className="text-caption text-muted-foreground">No cases yet.</p>
+          <p className="text-[14px] text-muted-foreground">No cases yet.</p>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {cases.map((c) => (
@@ -49,7 +52,12 @@ function CasesPage() {
                 className="group flex items-center gap-4 rounded-lg border border-border bg-card px-6 py-5 transition-colors hover:bg-muted"
               >
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-[16px] font-bold leading-snug text-foreground group-hover:text-primary">
+                  {c.status ? (
+                    <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+                      {c.status}
+                    </p>
+                  ) : null}
+                  <h3 className="mt-0.5 text-[16px] font-bold leading-snug text-foreground group-hover:text-primary">
                     {c.title}
                   </h3>
                   <p className="mt-1 text-[13px] text-muted-foreground">

@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "db:bootstrap": "node scripts/apply-bootstrap.mjs",
+    "db:migrate": "node scripts/apply-migration.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },

@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +6,7 @@ import { ChevronRight, GraduationCap } from "lucide-react";
 import { PageCtaBanner } from "@/components/layout/PageCtaBanner";
 import { PageEyebrow } from "@/components/layout/PageEyebrow";
 import { StatusBadge } from "@/components/layout/StatusBadge";
+import { CURRICULUM_CAREER_LEVELS } from "@/config/curriculum-career";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { listCurriculum } from "@/lib/curriculum.functions";
 
@@ -14,89 +14,114 @@ export const Route = createFileRoute("/_app/curriculum/")({
   component: CurriculumIndexPage,
 });
 
-const YEAR_LABELS: Record<1 | 2 | 3, string> = {
-  1: "Junior year 1",
-  2: "Junior year 2",
-  3: "Junior year 3",
-};
-
-type JuniorYear = 1 | 2 | 3;
-
 function CurriculumIndexPage() {
   const { juniorId } = useWorkspace();
   const fetchCurriculum = useServerFn(listCurriculum);
-  const [yearFilter, setYearFilter] = useState<JuniorYear | null>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["curriculum", juniorId, yearFilter],
-    queryFn: () =>
-      fetchCurriculum({
-        data: {
-          analystId: juniorId,
-          juniorYear: yearFilter ?? undefined,
-        },
-      }),
+    queryKey: ["curriculum", juniorId],
+    queryFn: () => fetchCurriculum({ data: { analystId: juniorId } }),
   });
 
-  const activeYear = (yearFilter ?? data?.profileJuniorYear ?? 1) as JuniorYear;
   const level = data?.level ?? 1;
+  const levelLabel = data?.levelLabel ?? "Analyst Basics";
   const cases = data?.cases ?? [];
+  const rolling = data?.rollingWindow;
 
   return (
     <div className="mx-auto max-w-[1280px] px-[60px] py-20">
-      <header className="mb-10 flex flex-wrap items-end justify-between gap-6">
+      <header className="mb-10">
+        <PageEyebrow index="02" label="Learning curriculum" />
+        <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
+          Historical case challenges
+        </h1>
+        <p className="mt-2 max-w-2xl text-caption text-muted-foreground">
+          Practice judgment on anonymized BDO deals. Compare your reasoning to
+          what actually happened, the model answer, and senior-style thinking.
+        </p>
+      </header>
+
+      <section className="mb-10 grid gap-6 rounded-lg border border-border bg-card p-6 md:grid-cols-2">
         <div>
-          <PageEyebrow index="02" label="Learning curriculum" />
-          <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
-            {YEAR_LABELS[activeYear]}
-          </h1>
-          <p className="mt-2 text-caption text-muted-foreground">
-            Analyst level {String(level).padStart(2, "0")} · 4 assignments per
-            year
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-primary">
+            Career level
+          </p>
+          <p className="mt-1 text-[22px] font-bold text-foreground">
+            {levelLabel}
+          </p>
+          <p className="mt-1 text-caption text-muted-foreground">
+            Level {String(level).padStart(2, "0")} of 10
           </p>
         </div>
-        <div className="flex gap-2">
-          {([1, 2, 3] as const).map((y) => (
-            <button
-              key={y}
-              type="button"
-              onClick={() => setYearFilter(y)}
-              className={`rounded-md px-4 py-2 text-[13px] font-bold uppercase tracking-[0.05em] transition-colors ${
-                activeYear === y
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+            Progress to next level
+          </p>
+          <p className="mt-1 text-[22px] font-bold tabular-nums text-foreground">
+            {rolling?.average ?? "—"}
+            <span className="text-[15px] font-normal text-muted-foreground">
+              {" "}
+              / {rolling?.target ?? 80}% avg
+            </span>
+          </p>
+          <p className="mt-1 text-caption text-muted-foreground">
+            Rolling window: last {rolling?.size ?? 5} challenges (
+            {rolling?.attempts ?? 0} completed)
+            {rolling?.readyToAdvance && (
+              <span className="ml-1 font-bold text-primary">
+                · Ready to advance
+              </span>
+            )}
+          </p>
+        </div>
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-[14px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+          Development ladder
+        </h2>
+        <ol className="flex flex-wrap gap-2">
+          {CURRICULUM_CAREER_LEVELS.map((row) => (
+            <li
+              key={row.level}
+              className={`rounded px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.04em] ${
+                row.level === level
                   ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-card text-foreground hover:bg-muted"
+                  : row.level < level
+                    ? "bg-primary/10 text-foreground"
+                    : "border border-border text-muted-foreground"
               }`}
             >
-              Year {y}
-            </button>
+              Y{row.year} {row.label}
+            </li>
           ))}
-        </div>
-      </header>
+        </ol>
+      </section>
 
       <section>
         <h2 className="mb-6 text-[20px] font-bold text-foreground">
-          Assignments
+          Cases at your level
         </h2>
         {isLoading ? (
           <p className="text-caption text-muted-foreground">
-            Loading assignments…
+            Loading cases…
           </p>
         ) : cases.length === 0 ? (
           <p className="text-caption text-muted-foreground">
-            No assignments for this year yet.
+            No cases for this level yet.
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {cases.map((c) => (
               <Link
                 key={c.id}
-                to="/curriculum/$caseId"
-                params={{ caseId: c.id }}
+                to="/curriculum/$caseSlug"
+                params={{ caseSlug: c.slug }}
                 className="group flex items-center gap-4 rounded-lg border border-border bg-card px-6 py-5 transition-colors hover:bg-muted"
               >
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-                    Assignment {String(c.sort_order ?? 0).padStart(2, "0")}
+                    Case {String(c.sort_order ?? 0).padStart(2, "0")}
                   </p>
                   <h3 className="mt-0.5 text-[16px] font-bold leading-snug text-foreground group-hover:text-primary">
                     {c.title}
@@ -120,8 +145,8 @@ function CurriculumIndexPage() {
 
       <PageCtaBanner
         icon={GraduationCap}
-        title="Prove what you learned in writing."
-        subtitle="See how you are tracking across all years."
+        title="Judgment beats repetition."
+        subtitle="See how you are tracking across all challenges."
         linkTo="/practice"
         linkLabel="View practice dashboard"
       />

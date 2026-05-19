@@ -18,7 +18,7 @@ import { Route as AppCurriculumRouteImport } from './routes/_app.curriculum'
 import { Route as AppCurriculumIndexRouteImport } from './routes/_app.curriculum.index'
 import { Route as AppCasesIndexRouteImport } from './routes/_app.cases.index'
 import { Route as ManagerJuniorsJuniorIdRouteImport } from './routes/manager/juniors.$juniorId'
-import { Route as AppCurriculumCaseIdRouteImport } from './routes/_app.curriculum.$caseId'
+import { Route as AppCurriculumCaseSlugRouteImport } from './routes/_app.curriculum.$caseSlug'
 import { Route as AppCasesCaseIdRouteImport } from './routes/_app.cases.$caseId'
 
 const ManagerRoute = ManagerRouteImport.update({
@@ -65,9 +65,9 @@ const ManagerJuniorsJuniorIdRoute = ManagerJuniorsJuniorIdRouteImport.update({
   path: '/juniors/$juniorId',
   getParentRoute: () => ManagerRoute,
 } as any)
-const AppCurriculumCaseIdRoute = AppCurriculumCaseIdRouteImport.update({
-  id: '/$caseId',
-  path: '/$caseId',
+const AppCurriculumCaseSlugRoute = AppCurriculumCaseSlugRouteImport.update({
+  id: '/$caseSlug',
+  path: '/$caseSlug',
   getParentRoute: () => AppCurriculumRoute,
 } as any)
 const AppCasesCaseIdRoute = AppCasesCaseIdRouteImport.update({
@@ -83,7 +83,7 @@ export interface FileRoutesByFullPath {
   '/practice': typeof AppPracticeRoute
   '/manager/': typeof ManagerIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
-  '/curriculum/$caseId': typeof AppCurriculumCaseIdRoute
+  '/curriculum/$caseSlug': typeof AppCurriculumCaseSlugRoute
   '/manager/juniors/$juniorId': typeof ManagerJuniorsJuniorIdRoute
   '/cases/': typeof AppCasesIndexRoute
   '/curriculum/': typeof AppCurriculumIndexRoute
@@ -93,7 +93,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/manager': typeof ManagerIndexRoute
   '/cases/$caseId': typeof AppCasesCaseIdRoute
-  '/curriculum/$caseId': typeof AppCurriculumCaseIdRoute
+  '/curriculum/$caseSlug': typeof AppCurriculumCaseSlugRoute
   '/manager/juniors/$juniorId': typeof ManagerJuniorsJuniorIdRoute
   '/cases': typeof AppCasesIndexRoute
   '/curriculum': typeof AppCurriculumIndexRoute
@@ -107,7 +107,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/manager/': typeof ManagerIndexRoute
   '/_app/cases/$caseId': typeof AppCasesCaseIdRoute
-  '/_app/curriculum/$caseId': typeof AppCurriculumCaseIdRoute
+  '/_app/curriculum/$caseSlug': typeof AppCurriculumCaseSlugRoute
   '/manager/juniors/$juniorId': typeof ManagerJuniorsJuniorIdRoute
   '/_app/cases/': typeof AppCasesIndexRoute
   '/_app/curriculum/': typeof AppCurriculumIndexRoute
@@ -121,7 +121,7 @@ export interface FileRouteTypes {
     | '/practice'
     | '/manager/'
     | '/cases/$caseId'
-    | '/curriculum/$caseId'
+    | '/curriculum/$caseSlug'
     | '/manager/juniors/$juniorId'
     | '/cases/'
     | '/curriculum/'
@@ -131,7 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/manager'
     | '/cases/$caseId'
-    | '/curriculum/$caseId'
+    | '/curriculum/$caseSlug'
     | '/manager/juniors/$juniorId'
     | '/cases'
     | '/curriculum'
@@ -144,7 +144,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/manager/'
     | '/_app/cases/$caseId'
-    | '/_app/curriculum/$caseId'
+    | '/_app/curriculum/$caseSlug'
     | '/manager/juniors/$juniorId'
     | '/_app/cases/'
     | '/_app/curriculum/'
@@ -220,11 +220,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ManagerJuniorsJuniorIdRouteImport
       parentRoute: typeof ManagerRoute
     }
-    '/_app/curriculum/$caseId': {
-      id: '/_app/curriculum/$caseId'
-      path: '/$caseId'
-      fullPath: '/curriculum/$caseId'
-      preLoaderRoute: typeof AppCurriculumCaseIdRouteImport
+    '/_app/curriculum/$caseSlug': {
+      id: '/_app/curriculum/$caseSlug'
+      path: '/$caseSlug'
+      fullPath: '/curriculum/$caseSlug'
+      preLoaderRoute: typeof AppCurriculumCaseSlugRouteImport
       parentRoute: typeof AppCurriculumRoute
     }
     '/_app/cases/$caseId': {
@@ -238,12 +238,12 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppCurriculumRouteChildren {
-  AppCurriculumCaseIdRoute: typeof AppCurriculumCaseIdRoute
+  AppCurriculumCaseSlugRoute: typeof AppCurriculumCaseSlugRoute
   AppCurriculumIndexRoute: typeof AppCurriculumIndexRoute
 }
 
 const AppCurriculumRouteChildren: AppCurriculumRouteChildren = {
-  AppCurriculumCaseIdRoute: AppCurriculumCaseIdRoute,
+  AppCurriculumCaseSlugRoute: AppCurriculumCaseSlugRoute,
   AppCurriculumIndexRoute: AppCurriculumIndexRoute,
 }
 

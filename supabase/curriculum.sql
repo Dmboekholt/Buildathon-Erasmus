@@ -2,6 +2,7 @@
 
 CREATE TABLE public.curriculum_cases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug text NOT NULL UNIQUE,
   title text NOT NULL,
   case_text text NOT NULL,
   learning_objective text NOT NULL DEFAULT '',
@@ -11,6 +12,8 @@ CREATE TABLE public.curriculum_cases (
   historical_answer text NOT NULL DEFAULT '',
   senior_reasoning text NOT NULL DEFAULT '',
   junior_year int NOT NULL DEFAULT 1 CHECK (junior_year BETWEEN 1 AND 3),
+  practice_area text NOT NULL DEFAULT 'decision_making'
+    CHECK (practice_area IN ('decision_making', 'insights', 'judgement')),
   sort_order int NOT NULL DEFAULT 1,
   difficulty int NOT NULL DEFAULT 1,
   era text,
@@ -35,6 +38,9 @@ CREATE TABLE public.curriculum_attempts (
   written_insight text NOT NULL DEFAULT '',
   per_question_scores jsonb NOT NULL DEFAULT '[]'::jsonb,
   accuracy_score int NOT NULL DEFAULT 0,
+  alignment_historical int NOT NULL DEFAULT 0,
+  alignment_ai int NOT NULL DEFAULT 0,
+  alignment_senior int NOT NULL DEFAULT 0,
   feedback text,
   skill_indicators jsonb NOT NULL DEFAULT '[]'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()

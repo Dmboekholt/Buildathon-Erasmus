@@ -142,6 +142,7 @@ CREATE POLICY "demo_all_score_snapshots" ON public.score_snapshots FOR ALL USING
 
 CREATE TABLE public.curriculum_cases (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug text NOT NULL UNIQUE,
   title text NOT NULL,
   case_text text NOT NULL,
   learning_objective text NOT NULL DEFAULT '',
@@ -175,6 +176,9 @@ CREATE TABLE public.curriculum_attempts (
   written_insight text NOT NULL DEFAULT '',
   per_question_scores jsonb NOT NULL DEFAULT '[]'::jsonb,
   accuracy_score int NOT NULL DEFAULT 0,
+  alignment_historical int NOT NULL DEFAULT 0,
+  alignment_ai int NOT NULL DEFAULT 0,
+  alignment_senior int NOT NULL DEFAULT 0,
   feedback text,
   skill_indicators jsonb NOT NULL DEFAULT '[]'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now()
@@ -591,10 +595,11 @@ INSERT INTO public.curriculum_progress (analyst_id, level) VALUES
 ON CONFLICT (analyst_id) DO NOTHING;
 
 INSERT INTO public.curriculum_cases (
-  id, title, case_text, questions, expected_insights, difficulty, era, industry, source,
+  id, slug, title, case_text, questions, expected_insights, difficulty, era, industry, source,
   ai_answer, historical_answer, senior_reasoning
 ) VALUES (
   'c1111111-1111-1111-1111-111111111111',
+  'working-capital-bridge',
   'Working capital bridge',
   'A mid-cap industrial distributor reported DSO rising from 48 to 62 days while inventory turns fell from 6.2x to 4.8x. Revenue grew 9% but operating cash flow declined year over year.',
   $q$[
@@ -612,6 +617,7 @@ INSERT INTO public.curriculum_cases (
 ),
 (
   'c2222222-2222-2222-2222-222222222222',
+  'margin-compression-post-merger',
   'Margin compression post-merger',
   'Two years after a horizontal merger, gross margin is down 180 bps versus the pro forma plan, while synergy capture on procurement was ahead of target.',
   $q$[
@@ -628,6 +634,7 @@ INSERT INTO public.curriculum_cases (
 ),
 (
   'c3333333-3333-3333-3333-333333333333',
+  'recurring-revenue-mix',
   'Recurring revenue mix',
   'A commercial HVAC platform grew revenue 12% but EBITDA margin fell 80 bps. Management attributes the miss to installation mix shifting toward lower-margin projects while maintenance contract revenue grew only 4%.',
   $q$[
@@ -645,6 +652,7 @@ INSERT INTO public.curriculum_cases (
 ),
 (
   'c4444444-4444-4444-4444-444444444444',
+  'carve-out-stand-alone-costs',
   'Carve-out stand-alone costs',
   'A precision components division is being carved out from a diversified industrial group. Pro forma SG&A savings are modeled at £6.2m, but IT and finance transitional service agreements run 24 months at arm''s length rates. Inventory fair-value step-up of £11m is under debate.',
   $q$[
@@ -662,6 +670,7 @@ INSERT INTO public.curriculum_cases (
 ),
 (
   'c5555555-5555-5555-5555-555555555555',
+  'saas-cohort-quality',
   'SaaS cohort quality',
   'A B2B workflow analytics platform reports ARR of $48m growing 42% YoY with net revenue retention of 118%. Sales and marketing spend rose 55% while CAC payback on 2024 cohorts is quoted at 14 months. Management claims a sustainable Rule-of-40 profile.',
   $q$[

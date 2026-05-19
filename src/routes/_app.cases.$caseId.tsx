@@ -15,6 +15,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+const detailShell = "mx-auto max-w-[900px] px-[60px] py-12 pb-20";
+
+const backLinkClass =
+  "mb-8 inline-flex items-center gap-2 text-[14px] text-muted-foreground transition-colors hover:text-foreground";
+
 export const Route = createFileRoute("/_app/cases/$caseId")({
   component: CaseDetailPage,
   notFoundComponent: CaseNotFound,
@@ -23,16 +28,15 @@ export const Route = createFileRoute("/_app/cases/$caseId")({
 
 function CaseNotFound() {
   return (
-    <div className="mx-auto max-w-4xl px-8 py-12">
-      <Link
-        to="/cases"
-        className="mb-6 inline-flex items-center gap-2 text-caption text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
+    <div className={detailShell}>
+      <Link to="/cases" className={backLinkClass}>
+        <ArrowLeft className="h-4 w-4" />
         All cases
       </Link>
-      <h1 className="text-page-title text-foreground">Case not found</h1>
-      <p className="mt-2 text-body text-muted-foreground">
+      <h1 className="text-[36px] font-bold leading-[1.1] tracking-[-0.02em] text-foreground">
+        Case not found
+      </h1>
+      <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
         This case may have been removed. Head back to the list to pick another.
       </p>
     </div>
@@ -41,16 +45,17 @@ function CaseNotFound() {
 
 function CaseError({ error }: { error: Error }) {
   return (
-    <div className="mx-auto max-w-4xl px-8 py-12">
-      <Link
-        to="/cases"
-        className="mb-6 inline-flex items-center gap-2 text-caption text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
+    <div className={detailShell}>
+      <Link to="/cases" className={backLinkClass}>
+        <ArrowLeft className="h-4 w-4" />
         All cases
       </Link>
-      <h1 className="text-page-title text-foreground">Something went wrong</h1>
-      <p className="mt-2 text-body text-muted-foreground">{error.message}</p>
+      <h1 className="text-[36px] font-bold leading-[1.1] tracking-[-0.02em] text-foreground">
+        Something went wrong
+      </h1>
+      <p className="mt-2 text-[14px] leading-relaxed text-muted-foreground">
+        {error.message}
+      </p>
     </div>
   );
 }
@@ -93,8 +98,8 @@ function CaseDetailPage() {
 
   if (isPending) {
     return (
-      <div className="mx-auto max-w-4xl px-8 py-12">
-        <div className="text-caption text-muted-foreground">Loading…</div>
+      <div className={detailShell}>
+        <div className="text-[14px] text-muted-foreground">Loading…</div>
       </div>
     );
   }
@@ -125,28 +130,27 @@ function CaseDetailPage() {
   );
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-12">
-      <Link
-        to="/cases"
-        className="mb-6 inline-flex items-center gap-2 text-caption text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-3.5 w-3.5" />
+    <div className={detailShell}>
+      <Link to="/cases" className={backLinkClass}>
+        <ArrowLeft className="h-4 w-4" />
         All cases
       </Link>
 
       <header className="mb-10">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-page-title text-foreground">{data.title}</h1>
-            <div className="mt-2 text-body text-foreground">{data.company}</div>
-            <div className="mt-1 text-caption text-muted-foreground">
+            <h1 className="text-[36px] font-bold leading-[1.1] tracking-[-0.02em] text-foreground">
+              {data.title}
+            </h1>
+            <div className="mt-2 text-[16px] text-foreground">{data.company}</div>
+            <div className="mt-1 text-[14px] text-muted-foreground">
               {data.industry}
             </div>
           </div>
           {data.status && (
             <Badge
               variant="outline"
-              className="rounded-sm border-border text-caption font-normal text-muted-foreground"
+              className="rounded-sm border-border text-[13px] font-normal text-muted-foreground"
             >
               {data.status}
             </Badge>
@@ -156,13 +160,16 @@ function CaseDetailPage() {
 
       {highlights.length > 0 && (
         <section className="mb-10">
-          <h2 className="mb-4 text-section text-foreground">
+          <h2 className="mb-4 text-[22px] font-bold text-foreground">
             Investment highlights
           </h2>
           <div className="rounded-lg border border-border bg-card">
             <ul className="divide-y divide-border">
               {highlights.map((h, i) => (
-                <li key={i} className="px-5 py-3 text-body text-foreground">
+                <li
+                  key={i}
+                  className="px-6 py-4 text-[14px] leading-relaxed text-foreground"
+                >
                   {h}
                 </li>
               ))}
@@ -173,14 +180,18 @@ function CaseDetailPage() {
 
       {profile && (
         <section className="mb-10">
-          <h2 className="mb-4 text-section text-foreground">Company profile</h2>
-          <div className="rounded-lg border border-border bg-card px-5 py-5">
+          <h2 className="mb-4 text-[22px] font-bold text-foreground">
+            Company profile
+          </h2>
+          <div className="rounded-lg border border-border bg-card p-6">
             {profile.description && (
-              <p className="text-body text-foreground">{profile.description}</p>
+              <p className="text-[14px] leading-relaxed text-foreground">
+                {profile.description}
+              </p>
             )}
             {divisions.length > 0 && (
               <div className="mt-5">
-                <div className="mb-2 text-caption text-muted-foreground">
+                <div className="mb-2 text-[13px] text-muted-foreground">
                   Divisions
                 </div>
                 <Table>
@@ -195,10 +206,10 @@ function CaseDetailPage() {
                   <TableBody>
                     {divisions.map((d) => (
                       <TableRow key={d.name}>
-                        <TableCell className="text-body text-foreground">
+                        <TableCell className="text-[14px] text-foreground">
                           {d.name}
                         </TableCell>
-                        <TableCell className="text-right font-mono text-body text-foreground">
+                        <TableCell className="text-right font-mono text-[14px] text-foreground">
                           {d.fy2024_revenue_share}
                         </TableCell>
                       </TableRow>
@@ -213,9 +224,11 @@ function CaseDetailPage() {
 
       {historical.length > 0 && (
         <section className="mb-10">
-          <h2 className="mb-1 text-section text-foreground">Financials</h2>
+          <h2 className="mb-1 text-[22px] font-bold text-foreground">
+            Financials
+          </h2>
           {financials?.currency && (
-            <p className="mb-4 text-caption text-muted-foreground">
+            <p className="mb-4 text-[14px] text-muted-foreground">
               {financials.currency}
             </p>
           )}
@@ -232,16 +245,16 @@ function CaseDetailPage() {
               <TableBody>
                 {historical.map((row) => (
                   <TableRow key={row.fy}>
-                    <TableCell className="font-mono text-body text-foreground">
+                    <TableCell className="font-mono text-[14px] text-foreground">
                       {row.fy}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-body text-foreground">
+                    <TableCell className="text-right font-mono text-[14px] text-foreground">
                       {row.revenue.toFixed(1)}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-body text-foreground">
+                    <TableCell className="text-right font-mono text-[14px] text-foreground">
                       {row.ebitda.toFixed(1)}
                     </TableCell>
-                    <TableCell className="text-right font-mono text-body text-foreground">
+                    <TableCell className="text-right font-mono text-[14px] text-foreground">
                       {row.ebitda_margin}
                     </TableCell>
                   </TableRow>
@@ -254,21 +267,23 @@ function CaseDetailPage() {
 
       {Object.keys(decisionGroups).length > 0 && (
         <section className="mb-10">
-          <h2 className="mb-4 text-section text-foreground">Decisions</h2>
+          <h2 className="mb-4 text-[22px] font-bold text-foreground">
+            Decisions
+          </h2>
           <div className="space-y-8">
             {Object.entries(decisionGroups).map(([section, items]) => (
               <div key={section}>
-                <div className="mb-3 text-caption text-muted-foreground">
+                <div className="mb-3 text-[13px] text-muted-foreground">
                   {section}
                 </div>
                 <div className="rounded-lg border border-border bg-card">
                   <ul className="divide-y divide-border">
                     {items.map((d) => (
-                      <li key={d.id} className="px-5 py-4">
-                        <div className="text-body text-foreground">
+                      <li key={d.id} className="p-6">
+                        <div className="text-[15px] font-medium leading-snug text-foreground">
                           {d.claim}
                         </div>
-                        <div className="mt-2 text-caption text-muted-foreground">
+                        <div className="mt-2 text-[13px] text-muted-foreground">
                           Rationale: {d.analyst_rationale_as_written}
                         </div>
                       </li>
@@ -283,14 +298,22 @@ function CaseDetailPage() {
 
       {management && (
         <section className="mb-10">
-          <h2 className="mb-4 text-section text-foreground">Management</h2>
-          <div className="rounded-lg border border-border bg-card px-5 py-5">
-            <p className="text-body text-foreground">{management}</p>
+          <h2 className="mb-4 text-[22px] font-bold text-foreground">
+            Management
+          </h2>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <p className="text-[14px] leading-relaxed text-foreground">
+              {management}
+            </p>
           </div>
         </section>
       )}
 
-      <ReviewSession analystWork={data.metadata} company={data.company ?? ""} caseId={caseId} />
+      <ReviewSession
+        analystWork={data.metadata}
+        company={data.company ?? ""}
+        caseId={caseId}
+      />
     </div>
   );
 }

@@ -66,6 +66,9 @@ function ImprovementsPage() {
         <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
           Open across the practice
         </h1>
+        <p className="mt-2 max-w-2xl text-caption text-muted-foreground">
+          Improvement areas surfaced from your recent case reviews.
+        </p>
       </header>
 
       <section className="mb-12 rounded-lg border border-border bg-card p-8 md:p-10">
@@ -78,7 +81,7 @@ function ImprovementsPage() {
             const score = categoryScore(catItems);
             return (
               <div key={cat} className="flex flex-col gap-3">
-                <span className="text-[12px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
                   {cat}
                 </span>
                 <div className="flex items-baseline gap-1">
@@ -113,7 +116,7 @@ function ImprovementsPage() {
           Top improvement areas
         </h2>
         {topImprovements.length === 0 ? (
-          <p className="text-caption text-muted-foreground">
+          <p className="text-[14px] text-muted-foreground">
             No open improvement areas yet. Complete a case review to get
             started.
           </p>

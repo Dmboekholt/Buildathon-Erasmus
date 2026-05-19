@@ -53,6 +53,15 @@ const stringArray = z.preprocess(
 export const CurriculumEvaluationSchema = z.object({
   overall_score: z.preprocess(coerceScore, z.number().min(0).max(100)),
   passed: z.preprocess(coerceBoolean, z.boolean()),
+  alignment_historical: z
+    .preprocess((v) => (v == null ? undefined : coerceScore(v)), z.number().min(0).max(100))
+    .optional(),
+  alignment_model: z
+    .preprocess((v) => (v == null ? undefined : coerceScore(v)), z.number().min(0).max(100))
+    .optional(),
+  alignment_senior: z
+    .preprocess((v) => (v == null ? undefined : coerceScore(v)), z.number().min(0).max(100))
+    .optional(),
   summary: z.preprocess(
     (v) => String(v ?? "").slice(0, 600),
     z.string().max(600),
@@ -90,6 +99,7 @@ export type CurriculumCaseForScoring = {
   learning_objective?: string | null;
   expected_insights: string[] | null;
   historical_answer: string;
+  ai_answer: string;
   senior_reasoning: string;
   questions: { id: string; prompt: string; guidance?: string }[] | null;
 };
@@ -99,11 +109,17 @@ export async function scoreCurriculumWithLlm(
   answers: { questionId: string; answer: string }[],
 ): Promise<CurriculumEvaluation & { passedFinal: boolean }> {
   const questions = kase.questions ?? [];
+  const modelAnswer =
+    kase.ai_answer?.trim() || kase.historical_answer?.trim() || "";
+
   const { system, user } = getCurriculumScoringPrompt({
     title: kase.title,
     learningObjective: kase.learning_objective?.trim() || "",
     caseText: kase.case_text,
     expectedInsights: kase.expected_insights ?? [],
+    historicalOutcome: kase.historical_answer,
+    modelAnswer,
+    seniorReasoning: kase.senior_reasoning,
     questions,
     answers,
   });
@@ -142,5 +158,12 @@ export async function scoreCurriculumWithLlm(
   const passedFinal =
     parsed.passed || parsed.overall_score >= CURRICULUM_PASS_SCORE;
 
-  return { ...parsed, passedFinal };
+  const fallback = parsed.overall_score;
+  return {
+    ...parsed,
+    alignment_historical: parsed.alignment_historical ?? fallback,
+    alignment_model: parsed.alignment_model ?? fallback,
+    alignment_senior: parsed.alignment_senior ?? fallback,
+    passedFinal,
+  };
 }

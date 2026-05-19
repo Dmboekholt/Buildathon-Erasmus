@@ -163,8 +163,10 @@ export type Database = {
           industry: string | null
           junior_year: number
           learning_objective: string
+          practice_area: string
           questions: Json
           senior_reasoning: string
+          slug: string
           sort_order: number
           source: string
           title: string
@@ -182,8 +184,10 @@ export type Database = {
           industry?: string | null
           junior_year?: number
           learning_objective?: string
+          practice_area?: string
           questions?: Json
           senior_reasoning: string
+          slug: string
           sort_order?: number
           source?: string
           title: string
@@ -197,12 +201,14 @@ export type Database = {
           era?: string | null
           expected_insights?: string[]
           historical_answer?: string
+          practice_area?: string
           id?: string
           industry?: string | null
           junior_year?: number
           learning_objective?: string
           questions?: Json
           senior_reasoning?: string
+          slug?: string
           sort_order?: number
           source?: string
           title?: string

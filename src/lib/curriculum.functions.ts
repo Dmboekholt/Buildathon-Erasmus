@@ -1,8 +1,16 @@
 import { createServerFn } from "@tanstack/react-start";
 import { notFound } from "@tanstack/react-router";
 import { z } from "zod";
+import {
+  careerLevelLabel,
+  careerLevelToCaseYear,
+  CURRICULUM_LEVEL_UP_SCORE,
+  CURRICULUM_MAX_LEVEL,
+  CURRICULUM_ROLLING_WINDOW,
+} from "@/config/curriculum-career";
 import { CURRICULUM_PASS_SCORE } from "@/config/curriculum-scoring";
 import { scoreCurriculumWithLlm } from "@/lib/curriculum-score";
+import { isUuid } from "@/lib/slug";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 type Question = {
@@ -11,7 +19,113 @@ type Question = {
   guidance?: string;
 };
 
-const juniorYearSchema = z.union([z.literal(1), z.literal(2), z.literal(3)]);
+function rollingAverage(scores: number[]): number | null {
+  if (scores.length === 0) return null;
+  return Math.round(
+    scores.reduce((a, b) => a + b, 0) / scores.length,
+  );
+}
+
+function computeLevelFromAttempts(
+  currentLevel: number,
+  recentScores: number[],
+): number {
+  if (currentLevel >= CURRICULUM_MAX_LEVEL) return currentLevel;
+  const window = recentScores.slice(0, CURRICULUM_ROLLING_WINDOW);
+  if (window.length < CURRICULUM_ROLLING_WINDOW) return currentLevel;
+  const avg = rollingAverage(window);
+  if (avg !== null && avg >= CURRICULUM_LEVEL_UP_SCORE) {
+    return Math.min(currentLevel + 1, CURRICULUM_MAX_LEVEL);
+  }
+  return currentLevel;
+}
+
+const PRACTICE_AREA_KEYS = [
+  "decision_making",
+  "insights",
+  "judgement",
+] as const;
+
+type PracticeAreaKey = (typeof PRACTICE_AREA_KEYS)[number];
+
+const PRACTICE_AREA_LABELS: Record<PracticeAreaKey, string> = {
+  decision_making: "Decision Making",
+  insights: "Insights",
+  judgement: "Judgement",
+};
+
+function monthLabel(d: Date): string {
+  const m = d.toLocaleDateString("en-GB", { month: "short" });
+  const y = String(d.getFullYear()).slice(-2);
+  return `${m} '${y}`;
+}
+
+function attemptPassed(
+  score: number,
+  feedback: string | null,
+): boolean {
+  let passed = score >= CURRICULUM_PASS_SCORE;
+  if (feedback) {
+    try {
+      const fb = JSON.parse(feedback) as { passed?: boolean };
+      if (fb.passed === true) passed = true;
+    } catch {
+      /* ignore */
+    }
+  }
+  return passed;
+}
+
+function buildProgressOverTime(
+  attempts: {
+    case_id: string;
+    accuracy_score: number | null;
+    feedback: string | null;
+    created_at: string;
+  }[],
+  totalAssignments: number,
+): { label: string; pct: number }[] {
+  const now = new Date();
+  const monthStarts: Date[] = [];
+  for (let i = 5; i >= 0; i--) {
+    monthStarts.push(new Date(now.getFullYear(), now.getMonth() - i, 1));
+  }
+
+  const firstPass = new Map<string, Date>();
+  const sorted = [...attempts].sort((a, b) =>
+    a.created_at.localeCompare(b.created_at),
+  );
+  const alreadyPassed = new Set<string>();
+
+  for (const a of sorted) {
+    if (alreadyPassed.has(a.case_id)) continue;
+    if (attemptPassed(a.accuracy_score ?? 0, a.feedback)) {
+      alreadyPassed.add(a.case_id);
+      firstPass.set(a.case_id, new Date(a.created_at));
+    }
+  }
+
+  return monthStarts.map((monthStart) => {
+    const monthEnd = new Date(
+      monthStart.getFullYear(),
+      monthStart.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999,
+    );
+    let passed = 0;
+    for (const date of firstPass.values()) {
+      if (date <= monthEnd) passed++;
+    }
+    const pct =
+      totalAssignments > 0
+        ? Math.round((passed / totalAssignments) * 100)
+        : 0;
+    return { label: monthLabel(monthStart), pct };
+  });
+}
 
 function deriveStatus(
   bestScore: number | null,
@@ -25,24 +139,14 @@ function deriveStatus(
 
 export const listCurriculum = createServerFn({ method: "GET" })
   .inputValidator((input) =>
-    z
-      .object({
-        analystId: z.string(),
-        juniorYear: juniorYearSchema.optional(),
-      })
-      .parse(input),
+    z.object({ analystId: z.string() }).parse(input),
   )
   .handler(async ({ data }) => {
-    const [profileRes, casesRes, progressRes, attemptsRes] = await Promise.all([
-      supabaseAdmin
-        .from("profiles")
-        .select("junior_year")
-        .eq("id", data.analystId)
-        .maybeSingle(),
+    const [casesRes, progressRes, attemptsRes] = await Promise.all([
       supabaseAdmin
         .from("curriculum_cases")
         .select(
-          "id, title, era, industry, source, junior_year, sort_order, learning_objective",
+          "id, slug, title, era, industry, source, junior_year, difficulty, sort_order, learning_objective",
         )
         .order("junior_year", { ascending: true })
         .order("sort_order", { ascending: true }),
@@ -58,21 +162,24 @@ export const listCurriculum = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false }),
     ]);
 
-    if (profileRes.error) throw new Error(profileRes.error.message);
     if (casesRes.error) throw new Error(casesRes.error.message);
     if (progressRes.error) throw new Error(progressRes.error.message);
     if (attemptsRes.error) throw new Error(attemptsRes.error.message);
 
-    const profileYear = (profileRes.data?.junior_year ?? 1) as 1 | 2 | 3;
-    const filterYear = data.juniorYear ?? profileYear;
+    const level = progressRes.data?.level ?? 1;
+    const caseYear = careerLevelToCaseYear(level);
 
     const bestByCase = new Map<
       string,
       { score: number; passed: boolean }
     >();
+    const recentScores: number[] = [];
     for (const a of attemptsRes.data ?? []) {
-      const prev = bestByCase.get(a.case_id);
       const score = a.accuracy_score ?? 0;
+      if (recentScores.length < CURRICULUM_ROLLING_WINDOW) {
+        recentScores.push(score);
+      }
+      const prev = bestByCase.get(a.case_id);
       let passed = score >= CURRICULUM_PASS_SCORE;
       if (a.feedback) {
         try {
@@ -88,12 +195,25 @@ export const listCurriculum = createServerFn({ method: "GET" })
     }
 
     const allCases = casesRes.data ?? [];
-    const filtered = allCases.filter((c) => c.junior_year === filterYear);
+    const filtered = allCases.filter((c) => c.junior_year === caseYear);
+    const rollingAvg = rollingAverage(recentScores);
+    const attemptsInWindow = recentScores.length;
 
     return {
-      level: progressRes.data?.level ?? 1,
-      profileJuniorYear: profileYear,
-      filterJuniorYear: filterYear,
+      level,
+      levelLabel: careerLevelLabel(level),
+      caseYear,
+      rollingWindow: {
+        size: CURRICULUM_ROLLING_WINDOW,
+        attempts: attemptsInWindow,
+        average: rollingAvg,
+        target: CURRICULUM_LEVEL_UP_SCORE,
+        readyToAdvance:
+          level < CURRICULUM_MAX_LEVEL &&
+          attemptsInWindow >= CURRICULUM_ROLLING_WINDOW &&
+          rollingAvg !== null &&
+          rollingAvg >= CURRICULUM_LEVEL_UP_SCORE,
+      },
       cases: filtered.map((c) => {
         const best = bestByCase.get(c.id);
         const bestScore = best?.score ?? null;
@@ -107,13 +227,15 @@ export const listCurriculum = createServerFn({ method: "GET" })
   });
 
 export const getCurriculumCase = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input) =>
+    z.object({ slug: z.string().min(1) }).parse(input),
+  )
   .handler(async ({ data }) => {
-    const { data: row, error } = await supabaseAdmin
-      .from("curriculum_cases")
-      .select("*")
-      .eq("id", data.id)
-      .maybeSingle();
+    let query = supabaseAdmin.from("curriculum_cases").select("*");
+    query = isUuid(data.slug)
+      ? query.eq("id", data.slug)
+      : query.eq("slug", data.slug);
+    const { data: row, error } = await query.maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw notFound();
     return row;
@@ -147,6 +269,7 @@ export const submitCurriculumAttempt = createServerFn({ method: "POST" })
         learning_objective: row.learning_objective,
         expected_insights: row.expected_insights,
         historical_answer: row.historical_answer,
+        ai_answer: row.ai_answer,
         senior_reasoning: row.senior_reasoning,
         questions,
       },
@@ -184,13 +307,26 @@ export const submitCurriculumAttempt = createServerFn({ method: "POST" })
       answers: data.answers,
       per_question_scores: perQuestion,
       accuracy_score: accuracy,
+      alignment_historical: evaluation.alignment_historical,
+      alignment_ai: evaluation.alignment_model,
+      alignment_senior: evaluation.alignment_senior,
       feedback: JSON.stringify(feedbackPayload),
       skill_indicators: evaluation.skill_indicators,
     });
     if (insertErr) throw new Error(insertErr.message);
 
-    let nextLevel = currentLevel;
-    if (evaluation.passedFinal && currentLevel < 10) nextLevel = currentLevel + 1;
+    const { data: recentAttempts } = await supabaseAdmin
+      .from("curriculum_attempts")
+      .select("accuracy_score")
+      .eq("analyst_id", data.analystId)
+      .order("created_at", { ascending: false })
+      .limit(CURRICULUM_ROLLING_WINDOW);
+
+    const recentScores = (recentAttempts ?? []).map(
+      (a) => a.accuracy_score ?? 0,
+    );
+    const nextLevel = computeLevelFromAttempts(currentLevel, recentScores);
+
     if (progress) {
       await supabaseAdmin
         .from("curriculum_progress")
@@ -202,6 +338,9 @@ export const submitCurriculumAttempt = createServerFn({ method: "POST" })
         .insert({ analyst_id: data.analystId, level: nextLevel });
     }
 
+    const modelAnswer =
+      row.ai_answer?.trim() || row.historical_answer?.trim() || "";
+
     return {
       accuracy,
       passed: evaluation.passedFinal,
@@ -209,32 +348,36 @@ export const submitCurriculumAttempt = createServerFn({ method: "POST" })
       strengths: evaluation.strengths,
       gaps: evaluation.gaps,
       skillIndicators: evaluation.skill_indicators,
+      alignmentHistorical: evaluation.alignment_historical,
+      alignmentModel: evaluation.alignment_model,
+      alignmentSenior: evaluation.alignment_senior,
       perQuestion,
       questions,
       level: nextLevel,
+      levelLabel: careerLevelLabel(nextLevel),
       leveledUp: nextLevel > currentLevel,
+      comparison: {
+        historicalOutcome: row.historical_answer,
+        modelAnswer,
+        seniorReasoning: row.senior_reasoning,
+      },
     };
   });
 
 export const getPracticeDashboard = createServerFn({ method: "GET" })
   .inputValidator((input) =>
-    z
-      .object({
-        analystId: z.string(),
-        juniorYear: juniorYearSchema.optional(),
-      })
-      .parse(input),
+    z.object({ analystId: z.string() }).parse(input),
   )
   .handler(async ({ data }) => {
-    const [profileRes, casesRes, attemptsRes] = await Promise.all([
+    const [progressRes, casesRes, attemptsRes] = await Promise.all([
       supabaseAdmin
-        .from("profiles")
-        .select("junior_year")
-        .eq("id", data.analystId)
+        .from("curriculum_progress")
+        .select("level")
+        .eq("analyst_id", data.analystId)
         .maybeSingle(),
       supabaseAdmin
         .from("curriculum_cases")
-        .select("id, title, junior_year, sort_order")
+        .select("id, title, junior_year, sort_order, practice_area")
         .order("junior_year", { ascending: true })
         .order("sort_order", { ascending: true }),
       supabaseAdmin
@@ -246,12 +389,12 @@ export const getPracticeDashboard = createServerFn({ method: "GET" })
         .order("created_at", { ascending: false }),
     ]);
 
-    if (profileRes.error) throw new Error(profileRes.error.message);
+    if (progressRes.error) throw new Error(progressRes.error.message);
     if (casesRes.error) throw new Error(casesRes.error.message);
     if (attemptsRes.error) throw new Error(attemptsRes.error.message);
 
-    const profileYear = (profileRes.data?.junior_year ?? 1) as 1 | 2 | 3;
-    const filterYear = data.juniorYear ?? profileYear;
+    const level = progressRes.data?.level ?? 1;
+    const filterYear = careerLevelToCaseYear(level);
     const allCases = casesRes.data ?? [];
     const totalAssignments = allCases.length;
 
@@ -310,11 +453,18 @@ export const getPracticeDashboard = createServerFn({ method: "GET" })
     const assignments = allCases.map((c) => {
       const meta = byCase.get(c.id);
       const bestScore = meta?.bestScore ?? null;
+      const rawArea = (c as { practice_area?: string }).practice_area;
+      const practiceArea = PRACTICE_AREA_KEYS.includes(
+        rawArea as PracticeAreaKey,
+      )
+        ? (rawArea as PracticeAreaKey)
+        : "decision_making";
       return {
         id: c.id,
         title: c.title,
         juniorYear: c.junior_year as number,
         sortOrder: c.sort_order as number,
+        practiceArea,
         bestScore,
         status: deriveStatus(bestScore, meta?.passed ?? false),
         lastAttemptAt: meta?.lastAttemptAt ?? null,
@@ -366,12 +516,34 @@ export const getPracticeDashboard = createServerFn({ method: "GET" })
       return { year, total: yearCases.length, passed };
     });
 
+    const byPracticeArea = PRACTICE_AREA_KEYS.map((area) => {
+      const areaCases = assignments.filter((a) => a.practiceArea === area);
+      const passed = areaCases.filter((a) => a.status === "passed").length;
+      const total = areaCases.length;
+      return {
+        area,
+        label: PRACTICE_AREA_LABELS[area],
+        passed,
+        total,
+        pct: total > 0 ? Math.round((passed / total) * 100) : 0,
+      };
+    });
+
+    const progressOverTime = buildProgressOverTime(
+      attemptsRes.data ?? [],
+      totalAssignments,
+    );
+
     return {
-      profileJuniorYear: profileYear,
-      filterJuniorYear: filterYear,
+      level,
+      levelLabel: careerLevelLabel(level),
+      filterCaseYear: filterYear,
       totalAssignments,
       passedCount,
       byYear,
+      byPracticeArea,
+      progressOverTime,
+      allAssignments: assignments,
       assignments: assignments.filter((a) => a.juniorYear === filterYear),
       learned: [...learnedSet].slice(0, 30),
       focusNext: needsWork.slice(0, 4),
