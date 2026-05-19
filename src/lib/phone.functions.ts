@@ -71,6 +71,7 @@ export const startPhoneReview = createServerFn({ method: "POST" })
         agent_id: agentId,
         agent_phone_number_id: phoneNumberId,
         to_number: toNumber,
+        telephony_call_config: { ringing_timeout_secs: 90 },
         conversation_initiation_client_data: {
           dynamic_variables: {
             analyst_work: JSON.stringify(c.metadata ?? {}),
