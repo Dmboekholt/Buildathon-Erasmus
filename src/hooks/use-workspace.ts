@@ -9,6 +9,11 @@ const JUNIOR_KEY = "activeJuniorId";
 const DEFAULT_MANAGER = "22222222-2222-2222-2222-222222222222";
 const DEFAULT_JUNIOR = "11111111-1111-1111-1111-111111111111";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function safe(value: string | null, fallback: string) {
+  return value && UUID_RE.test(value) ? value : fallback;
+}
+
 function readMode(): WorkspaceMode {
   if (typeof window === "undefined") return "junior";
   return (localStorage.getItem(MODE_KEY) as WorkspaceMode) || "junior";
@@ -16,12 +21,12 @@ function readMode(): WorkspaceMode {
 
 export function getActiveManagerId(): string {
   if (typeof window === "undefined") return DEFAULT_MANAGER;
-  return localStorage.getItem(MANAGER_KEY) || DEFAULT_MANAGER;
+  return safe(localStorage.getItem(MANAGER_KEY), DEFAULT_MANAGER);
 }
 
 export function getActiveJuniorId(): string {
   if (typeof window === "undefined") return DEFAULT_JUNIOR;
-  return localStorage.getItem(JUNIOR_KEY) || DEFAULT_JUNIOR;
+  return safe(localStorage.getItem(JUNIOR_KEY), DEFAULT_JUNIOR);
 }
 
 export function setWorkspaceMode(mode: WorkspaceMode) {
