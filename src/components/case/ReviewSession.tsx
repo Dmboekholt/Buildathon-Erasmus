@@ -4,6 +4,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorkspace } from "@/hooks/use-workspace";
 import {
+  usePhoneReview,
+  type PhoneReviewPhase,
+} from "@/hooks/use-phone-review";
+import { Button } from "@/components/ui/button";
+import {
   saveDebrief,
   scoreDebrief,
   type EvaluationResult,
@@ -39,6 +44,7 @@ export function ReviewSession(props: Props) {
 
 function ReviewSessionInner({ analystWork, company, caseId }: Props) {
   const { juniorId } = useWorkspace();
+  const phone = usePhoneReview(caseId);
   const [mounted, setMounted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasEnded, setHasEnded] = useState(false);
@@ -141,9 +147,12 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
 
   if (!mounted) {
     return (
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
         <button type="button" disabled className={primaryButtonClass}>
           Start review session
+        </button>
+        <button type="button" disabled className={secondaryButtonClass}>
+          Start review session by phone
         </button>
       </div>
     );
@@ -151,16 +160,54 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
 
   const status = conversation.status;
   const isActive = started && status !== "disconnected";
+  const phoneActive =
+    phone.phase !== "idle" && phone.phase !== "error" && phone.phase !== "done";
 
   if (!isActive && !hasEnded) {
     return (
-      <div className="space-y-2">
-        <button type="button" onClick={start} className={primaryButtonClass}>
-          Start review session
-        </button>
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={start}
+            disabled={phone.busy}
+            className={primaryButtonClass}
+          >
+            Start review session
+          </button>
+          <button
+            type="button"
+            onClick={() => void phone.startCall()}
+            disabled={phone.busy}
+            className={secondaryButtonClass}
+          >
+            Start review session by phone
+          </button>
+        </div>
+        {(phone.busy || phone.error) && (
+          <PhoneReviewStatus
+            phase={phone.phase}
+            error={phone.error}
+            evaluation={phone.evaluation}
+            onReset={phone.reset}
+          />
+        )}
         {error && (
           <p className="text-[13px] text-destructive">{error}</p>
         )}
+      </div>
+    );
+  }
+
+  if (phoneActive || phone.phase === "done") {
+    return (
+      <div className="space-y-4">
+        <PhoneReviewStatus
+          phase={phone.phase}
+          error={phone.error}
+          evaluation={phone.evaluation}
+          onReset={phone.reset}
+        />
       </div>
     );
   }
@@ -222,6 +269,68 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
       )}
 
       {evaluation && <EvaluationCard evaluation={evaluation} />}
+    </div>
+  );
+}
+
+function PhoneReviewStatus({
+  phase,
+  error,
+  evaluation,
+  onReset,
+}: {
+  phase: PhoneReviewPhase;
+  error: string | null;
+  evaluation: EvaluationResult | null;
+  onReset: () => void;
+}) {
+  const busy =
+    phase === "calling" || phase === "waiting" || phase === "scoring";
+
+  if (phase === "idle" && !error) return null;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-6">
+      {busy && (
+        <div className="inline-flex items-center gap-2 text-[13px] text-muted-foreground">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground" />
+          {phase === "calling" && "Placing the call…"}
+          {phase === "waiting" &&
+            "Calling the configured line — pick up and talk to Mentor. This updates when the call ends."}
+          {phase === "scoring" && "Call ended. Scoring your review…"}
+        </div>
+      )}
+
+      {error && <p className="text-[13px] text-destructive">{error}</p>}
+
+      {phase === "done" && evaluation && (
+        <>
+          <div className="flex items-baseline justify-between">
+            <span className="text-[13px] text-muted-foreground">
+              Phone review feedback
+            </span>
+            <span className="font-mono text-[22px] font-bold text-foreground">
+              {evaluation.overall_score}
+              <span className="text-[13px] font-normal text-muted-foreground">
+                /10
+              </span>
+            </span>
+          </div>
+          <div className="mt-3 flex flex-wrap gap-4 font-mono text-[13px] text-muted-foreground">
+            <span>Decision: {evaluation.decision_making_score}/10</span>
+            <span>Insights: {evaluation.insights_score}/10</span>
+            <span>Judgement: {evaluation.judgement_score}/10</span>
+          </div>
+          {evaluation.summary && (
+            <p className="mt-3 text-[14px] leading-relaxed text-foreground">
+              {evaluation.summary}
+            </p>
+          )}
+          <Button onClick={onReset} variant="outline" className="mt-4">
+            New phone review
+          </Button>
+        </>
+      )}
     </div>
   );
 }

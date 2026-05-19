@@ -4,6 +4,16 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ELEVENLABS_API = "https://api.elevenlabs.io/v1";
 
+const E164_REGEX = /^\+[1-9]\d{6,14}$/;
+
+function getReviewPhoneToNumber(): string {
+  const raw = process.env.REVIEW_PHONE_TO_NUMBER?.trim() ?? "";
+  if (!raw || !E164_REGEX.test(raw)) {
+    throw new Error("REVIEW_PHONE_TO_NUMBER is not configured");
+  }
+  return raw;
+}
+
 function getApiKey(): string {
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key) throw new Error("ELEVENLABS_API_KEY is not configured");
@@ -11,26 +21,16 @@ function getApiKey(): string {
 }
 
 /**
- * Place an outbound phone call: the Mentor agent calls `toNumber` and
- * interviews the analyst about the given case. Returns the ElevenLabs
+ * Place an outbound phone call: the Mentor agent calls REVIEW_PHONE_TO_NUMBER
+ * and interviews the analyst about the given case. Returns the ElevenLabs
  * conversation id, which the client then polls for the transcript.
  */
 export const startPhoneReview = createServerFn({ method: "POST" })
   .inputValidator((input) =>
-    z
-      .object({
-        caseId: z.string().uuid(),
-        toNumber: z
-          .string()
-          .trim()
-          .regex(
-            /^\+[1-9]\d{6,14}$/,
-            "Phone number must be E.164 format, e.g. +19015633904",
-          ),
-      })
-      .parse(input),
+    z.object({ caseId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data }) => {
+    const toNumber = getReviewPhoneToNumber();
     const apiKey = getApiKey();
     const agentId =
       process.env.ELEVENLABS_AGENT_ID ?? process.env.VITE_ELEVENLABS_AGENT_ID;
@@ -61,7 +61,7 @@ export const startPhoneReview = createServerFn({ method: "POST" })
       body: JSON.stringify({
         agent_id: agentId,
         agent_phone_number_id: phoneNumberId,
-        to_number: data.toNumber,
+        to_number: toNumber,
         conversation_initiation_client_data: {
           dynamic_variables: {
             analyst_work: JSON.stringify(c.metadata ?? {}),

@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { startPhoneReview, fetchPhoneTranscript } from "@/lib/phone.functions";
 import {
@@ -11,16 +9,19 @@ import {
   type EvaluationResult,
 } from "@/lib/review.functions";
 
-type Props = { caseId: string };
-
-type Phase = "idle" | "calling" | "waiting" | "scoring" | "done" | "error";
+export type PhoneReviewPhase =
+  | "idle"
+  | "calling"
+  | "waiting"
+  | "scoring"
+  | "done"
+  | "error";
 
 const POLL_INTERVAL_MS = 6000;
 const MAX_POLLS = 90; // ~9 minutes
 
-export function PhoneReview({ caseId }: Props) {
-  const [phone, setPhone] = useState("+1");
-  const [phase, setPhase] = useState<Phase>("idle");
+export function usePhoneReview(caseId: string) {
+  const [phase, setPhase] = useState<PhoneReviewPhase>("idle");
   const [error, setError] = useState<string | null>(null);
   const [evaluation, setEvaluation] = useState<EvaluationResult | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -99,7 +100,7 @@ export function PhoneReview({ caseId }: Props) {
     setPhase("calling");
     try {
       const { conversationId } = await startCallFn({
-        data: { caseId, toNumber: phone.trim() },
+        data: { caseId },
       });
       setPhase("waiting");
       void poll(conversationId, 0);
@@ -107,7 +108,7 @@ export function PhoneReview({ caseId }: Props) {
       setError((e as Error).message || "Could not place the call.");
       setPhase("error");
     }
-  }, [caseId, phone, poll, startCallFn]);
+  }, [caseId, poll, startCallFn]);
 
   const reset = useCallback(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -116,71 +117,15 @@ export function PhoneReview({ caseId }: Props) {
     setEvaluation(null);
   }, []);
 
-  const busy = phase === "calling" || phase === "waiting" || phase === "scoring";
+  const busy =
+    phase === "calling" || phase === "waiting" || phase === "scoring";
 
-  return (
-    <div className="mt-4 rounded-lg border border-border bg-card px-5 py-5">
-      <h3 className="text-section text-foreground">Review by phone call</h3>
-      <p className="mt-1 text-caption text-muted-foreground">
-        Mentor will call your phone and interview you about this case.
-      </p>
-
-      {(phase === "idle" || phase === "error") && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+19015633904"
-            className="max-w-[220px]"
-          />
-          <Button
-            onClick={startCall}
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
-          >
-            Call my phone
-          </Button>
-        </div>
-      )}
-
-      {busy && (
-        <div className="mt-4 inline-flex items-center gap-2 text-caption text-muted-foreground">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-foreground" />
-          {phase === "calling" && "Placing the call…"}
-          {phase === "waiting" &&
-            "Calling your phone — pick up and talk to Mentor. This updates when the call ends."}
-          {phase === "scoring" && "Call ended. Scoring your review…"}
-        </div>
-      )}
-
-      {error && <p className="mt-3 text-caption text-destructive">{error}</p>}
-
-      {phase === "done" && evaluation && (
-        <div className="mt-4 border-t border-border pt-4">
-          <div className="flex items-baseline justify-between">
-            <span className="text-caption text-muted-foreground">
-              Phone review feedback
-            </span>
-            <span className="font-mono text-section text-foreground">
-              {evaluation.overall_score}
-              <span className="text-caption text-muted-foreground">/10</span>
-            </span>
-          </div>
-          <div className="mt-2 flex flex-wrap gap-4 font-mono text-caption text-muted-foreground">
-            <span>Decision: {evaluation.decision_making_score}/10</span>
-            <span>Insights: {evaluation.insights_score}/10</span>
-            <span>Judgement: {evaluation.judgement_score}/10</span>
-          </div>
-          {evaluation.summary && (
-            <p className="mt-3 text-body text-foreground">
-              {evaluation.summary}
-            </p>
-          )}
-          <Button onClick={reset} variant="outline" className="mt-4">
-            New phone review
-          </Button>
-        </div>
-      )}
-    </div>
-  );
+  return {
+    phase,
+    error,
+    evaluation,
+    busy,
+    startCall,
+    reset,
+  };
 }
