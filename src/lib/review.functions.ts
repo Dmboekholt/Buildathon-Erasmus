@@ -104,7 +104,7 @@ export const scoreDebrief = createServerFn({ method: "POST" })
 
     const { data: debrief, error: dErr } = await supabaseAdmin
       .from("debriefs")
-      .select("id, transcript, case_id, junior_id, project_id")
+      .select("id, transcript, case_id")
       .eq("id", data.debriefId)
       .maybeSingle();
     if (dErr) throw new Error(dErr.message);
@@ -120,14 +120,10 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       caseContext = c;
     }
 
-    const improvementsQuery = supabaseAdmin
+    const { data: existing, error: iErr } = await supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority")
       .eq("status", "open");
-    if (debrief.junior_id) {
-      improvementsQuery.eq("junior_id", debrief.junior_id);
-    }
-    const { data: existing, error: iErr } = await improvementsQuery;
     if (iErr) throw new Error(iErr.message);
 
     const { system, user } = getScoringPrompt({
