@@ -51,15 +51,17 @@ function AnalyticsPage() {
       {/* Hero */}
       <header className="mb-16">
         <div>
-          <div className="eyebrow mb-5">Netherlands · Analytics</div>
+          <div className="eyebrow mb-5">BDO · All practices</div>
           <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.015em] text-foreground">
-            Signals from every review,
+            Every review you do
             <br />
-            measured over time.
+            adds up over time.
           </h1>
           <p className="mt-6 max-w-xl text-body text-foreground">
-            Track where decision making, insights, and judgement need the most
-            attention across your open work.
+            Your open improvement areas across decision making, insights, and
+            judgement, kept in one place. Keeping a running record means you
+            can spot patterns and work on them sooner, instead of piecing
+            feedback together from memory months later.
           </p>
           <Link
             to="/cases"
