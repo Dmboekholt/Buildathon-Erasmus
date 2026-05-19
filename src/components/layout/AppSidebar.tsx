@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ClipboardList, FolderOpen, GraduationCap } from "lucide-react";
+import { ClipboardList, FolderOpen } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -24,16 +24,6 @@ const navSections = [
       { title: "Current work", url: "/cases", icon: FolderOpen },
     ],
   },
-  {
-    label: "Practice",
-    items: [
-      {
-        title: "Learning curriculum",
-        url: "/curriculum",
-        icon: GraduationCap,
-      },
-    ],
-  },
 ];
 
 export function AppSidebar() {
@@ -53,7 +43,7 @@ export function AppSidebar() {
           <div key={section.label}>
             {index > 0 && <SidebarSeparator className="my-4" />}
             <SidebarGroup className={index > 0 ? "mt-2" : undefined}>
-              <SidebarGroupLabel className="eyebrow px-3">
+              <SidebarGroupLabel className="px-3 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-primary">
                 {section.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -65,18 +55,19 @@ export function AppSidebar() {
                         <SidebarMenuButton
                           asChild
                           isActive={active}
+                          size="sm"
                           className="rounded-none"
                         >
                           <Link
                             to={item.url}
-                            className={`flex items-center gap-3 border-l-2 ${
+                            className={`flex items-center gap-2.5 border-l-2 ${
                               active
                                 ? "border-l-primary text-primary"
                                 : "border-l-transparent text-foreground"
                             }`}
                           >
-                            <item.icon className="h-4 w-4" />
-                            <span className="text-[15px] font-bold uppercase tracking-[0.05em]">
+                            <item.icon className="h-3.5 w-3.5" />
+                            <span className="text-[13px] font-bold uppercase tracking-[0.05em]">
                               {item.title}
                             </span>
                           </Link>

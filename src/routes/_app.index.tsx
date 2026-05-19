@@ -83,16 +83,11 @@ function ImprovementsPage() {
       </header>
 
       {/* Section header */}
-      <div className="mb-10 flex items-baseline justify-between border-t-2 border-foreground pt-6">
-        <div>
-          <div className="eyebrow">01 Improvements</div>
-          <h2 className="mt-2 text-[24px] font-bold leading-tight text-foreground">
-            Open across the practice
-          </h2>
-        </div>
-        <span className="text-caption text-muted-foreground">
-          {String(improvements.length).padStart(2, "0")} open
-        </span>
+      <div className="mb-10 border-t-2 border-foreground pt-6">
+        <div className="eyebrow">01 Improvements</div>
+        <h2 className="mt-2 text-[24px] font-bold leading-tight text-foreground">
+          Open across the practice
+        </h2>
       </div>
 
       {/* Category score panel */}

@@ -164,6 +164,36 @@ function CurriculumCasePage() {
         </section>
       )}
 
+      {result &&
+        (kase.historical_answer.trim() || kase.senior_reasoning.trim()) && (
+          <section className="mb-12">
+            <div className="mb-8 border-t-2 border-foreground pt-6">
+              <div className="eyebrow">03 Learn from the archive</div>
+              <h2 className="mt-2 text-[24px] font-bold leading-tight text-foreground">
+                Compare with past work
+              </h2>
+            </div>
+            <div className="flex flex-col gap-4">
+              {kase.historical_answer.trim() && (
+                <div className="rounded-lg border border-border bg-card p-8">
+                  <div className="eyebrow mb-3">Past analyst answer</div>
+                  <p className="whitespace-pre-line text-body text-foreground">
+                    {kase.historical_answer}
+                  </p>
+                </div>
+              )}
+              {kase.senior_reasoning.trim() && (
+                <div className="rounded-lg border border-border bg-card p-8">
+                  <div className="eyebrow mb-3">Senior perspective</div>
+                  <p className="whitespace-pre-line text-body text-foreground">
+                    {kase.senior_reasoning}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
       <div className="flex items-center gap-4">
         <button
           type="button"

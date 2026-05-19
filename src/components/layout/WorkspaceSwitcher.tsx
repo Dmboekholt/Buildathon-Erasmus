@@ -64,7 +64,7 @@ export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
           <button
             type="button"
             onClick={goToManager}
-            className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2.5 text-left text-body text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-left text-caption text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
           >
             <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>Management dashboard</span>
@@ -97,7 +97,7 @@ export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
           <button
             type="button"
             onClick={goToJunior}
-            className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2.5 text-left text-body text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-left text-caption text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
           >
             <LayoutDashboard className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>Junior workspace</span>
