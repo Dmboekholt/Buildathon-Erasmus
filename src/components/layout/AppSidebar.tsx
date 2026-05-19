@@ -29,8 +29,8 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center px-3 py-4 group-data-[collapsible=icon]:px-1">
-          <BdoLogo />
+        <div className="flex items-center px-3 py-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
+          <BdoLogo className="h-7 w-auto group-data-[collapsible=icon]:h-5" />
         </div>
       </SidebarHeader>
       <SidebarContent>

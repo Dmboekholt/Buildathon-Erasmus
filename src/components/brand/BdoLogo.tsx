@@ -1,4 +1,5 @@
 import bdoLogoSrc from "@/assets/bdo-logo.png";
+import { cn } from "@/lib/utils";
 
 type Props = {
   className?: string;
@@ -9,7 +10,7 @@ export function BdoLogo({ className }: Props) {
     <img
       src={bdoLogoSrc}
       alt="BDO"
-      className={`h-7 w-auto ${className ?? ""}`}
+      className={cn("h-7 w-auto object-contain", className)}
     />
   );
 }
