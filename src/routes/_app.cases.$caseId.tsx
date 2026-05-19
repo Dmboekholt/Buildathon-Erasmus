@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft } from "lucide-react";
+import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { getCase } from "@/lib/cases.functions";
 import { Badge } from "@/components/ui/badge";
 import { ReviewSession } from "@/components/case/ReviewSession";
@@ -83,10 +84,11 @@ type Content = {
 
 function CaseDetailPage() {
   const { caseId } = Route.useParams();
+  const juniorId = getActiveJuniorId();
   const fetchCase = useServerFn(getCase);
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ["case", caseId],
-    queryFn: () => fetchCase({ data: { id: caseId } }),
+    queryKey: ["case", caseId, juniorId],
+    queryFn: () => fetchCase({ data: { id: caseId, juniorId } }),
   });
 
   if (isPending) {
@@ -157,7 +159,7 @@ function CaseDetailPage() {
           <h2 className="mb-4 text-section text-foreground">
             Investment highlights
           </h2>
-          <div className="rounded-md border border-border bg-card">
+          <div className="rounded-lg border border-border bg-card">
             <ul className="divide-y divide-border">
               {highlights.map((h, i) => (
                 <li key={i} className="px-5 py-3 text-body text-foreground">
@@ -172,7 +174,7 @@ function CaseDetailPage() {
       {profile && (
         <section className="mb-10">
           <h2 className="mb-4 text-section text-foreground">Company profile</h2>
-          <div className="rounded-md border border-border bg-card px-5 py-5">
+          <div className="rounded-lg border border-border bg-card px-5 py-5">
             {profile.description && (
               <p className="text-body text-foreground">{profile.description}</p>
             )}
@@ -217,7 +219,7 @@ function CaseDetailPage() {
               {financials.currency}
             </p>
           )}
-          <div className="rounded-md border border-border bg-card">
+          <div className="rounded-lg border border-border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -259,7 +261,7 @@ function CaseDetailPage() {
                 <div className="mb-3 text-caption text-muted-foreground">
                   {section}
                 </div>
-                <div className="rounded-md border border-border bg-card">
+                <div className="rounded-lg border border-border bg-card">
                   <ul className="divide-y divide-border">
                     {items.map((d) => (
                       <li key={d.id} className="px-5 py-4">
@@ -282,7 +284,7 @@ function CaseDetailPage() {
       {management && (
         <section className="mb-10">
           <h2 className="mb-4 text-section text-foreground">Management</h2>
-          <div className="rounded-md border border-border bg-card px-5 py-5">
+          <div className="rounded-lg border border-border bg-card px-5 py-5">
             <p className="text-body text-foreground">{management}</p>
           </div>
         </section>

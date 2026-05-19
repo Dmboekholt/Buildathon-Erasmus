@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, FolderOpen, GraduationCap } from "lucide-react";
+import { ClipboardList, FolderOpen, GraduationCap } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,14 +11,29 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
 import { BdoLogo } from "@/components/brand/BdoLogo";
 
-const items = [
-  { title: "Analytics", url: "/", icon: BarChart3 },
-  { title: "Cases", url: "/cases", icon: FolderOpen },
-  { title: "Learning Curriculum", url: "/curriculum", icon: GraduationCap },
+const navSections = [
+  {
+    label: "Current work",
+    items: [
+      { title: "Improvements", url: "/", icon: ClipboardList },
+      { title: "Current work", url: "/cases", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Practice",
+    items: [
+      {
+        title: "Learning curriculum",
+        url: "/curriculum",
+        icon: GraduationCap,
+      },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -34,41 +49,46 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="eyebrow px-3">
-            Workspace
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const active = isActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      className="rounded-none"
-                    >
-                      <Link
-                        to={item.url}
-                        className={`flex items-center gap-3 border-l-2 ${
-                          active
-                            ? "border-l-primary text-primary"
-                            : "border-l-transparent text-foreground"
-                        }`}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span className="text-[15px] font-bold uppercase tracking-[0.05em]">
-                          {item.title}
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navSections.map((section, index) => (
+          <div key={section.label}>
+            {index > 0 && <SidebarSeparator className="my-4" />}
+            <SidebarGroup className={index > 0 ? "mt-2" : undefined}>
+              <SidebarGroupLabel className="eyebrow px-3">
+                {section.label}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map((item) => {
+                    const active = isActive(item.url);
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={active}
+                          className="rounded-none"
+                        >
+                          <Link
+                            to={item.url}
+                            className={`flex items-center gap-3 border-l-2 ${
+                              active
+                                ? "border-l-primary text-primary"
+                                : "border-l-transparent text-foreground"
+                            }`}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span className="text-[15px] font-bold uppercase tracking-[0.05em]">
+                              {item.title}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </div>
+        ))}
       </SidebarContent>
       <SidebarFooter className="mt-auto">
         <WorkspaceSwitcher mode="junior" />

@@ -4,14 +4,16 @@
 /*
  * BDO design system — corporate, bold, confident, lots of whitespace.
  * Brand red #E40521 for action, brand navy #1A2B4A for the wordmark,
- * near-black charcoal for type. Square corners, flat surfaces, no shadows.
+ * near-black charcoal for type. Subtle corner radius, flat surfaces, no shadows.
  */
 
 @theme inline {
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-pill: 0px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-pill: 9999px;
 
   /* Surfaces */
   --color-background: #ffffff;

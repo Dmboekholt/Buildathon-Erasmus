@@ -7,7 +7,7 @@ import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { listImprovements } from "@/lib/review.functions";
 
 export const Route = createFileRoute("/_app/")({
-  component: AnalyticsPage,
+  component: ImprovementsPage,
 });
 
 type Category = "Decision Making" | "Insights" | "Judgement";
@@ -22,6 +22,8 @@ type Improvement = {
 };
 
 const categories: Category[] = ["Decision Making", "Insights", "Judgement"];
+
+const MAX_IMPROVEMENT_CARDS = 6;
 
 const priorityWeight: Record<Priority, number> = {
   High: 3,
@@ -38,7 +40,7 @@ function categoryScore(items: Improvement[]) {
   return Math.min(100, Math.round((raw / 15) * 100));
 }
 
-function AnalyticsPage() {
+function ImprovementsPage() {
   const juniorId = getActiveJuniorId();
   const fetchImprovements = useServerFn(listImprovements);
   const { data } = useQuery({
@@ -46,8 +48,15 @@ function AnalyticsPage() {
     queryFn: () => fetchImprovements({ data: { juniorId } }),
   });
   const improvements: Improvement[] = data ?? [];
+  const topImprovements = [...improvements]
+    .sort(
+      (a, b) =>
+        (priorityWeight[b.priority as Priority] ?? 0) -
+        (priorityWeight[a.priority as Priority] ?? 0),
+    )
+    .slice(0, MAX_IMPROVEMENT_CARDS);
   return (
-    <div className="mx-auto max-w-[1280px] py-20 px-[60px]">
+    <div className="mx-auto max-w-[1280px] px-[60px] py-20">
       {/* Hero */}
       <header className="mb-16">
         <div>
@@ -65,7 +74,7 @@ function AnalyticsPage() {
           </p>
           <Link
             to="/cases"
-            className="mt-8 inline-flex items-center gap-3 bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90"
+            className="mt-8 inline-flex items-center gap-3 rounded-md bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90"
           >
             Browse cases
             <ArrowRight className="h-4 w-4" />
@@ -87,30 +96,19 @@ function AnalyticsPage() {
       </div>
 
       {/* Category score panel */}
-      <section className="mb-16 border border-border bg-muted p-10">
-        <div className="mb-8 flex items-baseline justify-between">
-          <h3 className="text-[20px] font-bold text-foreground">
-            Attention by category
-          </h3>
-          <span className="text-caption text-muted-foreground">
-            weighted by priority
-          </span>
-        </div>
+      <section className="mb-16 rounded-lg border border-border bg-card p-10">
+        <h3 className="mb-8 text-[20px] font-bold text-foreground">
+          Attention by category
+        </h3>
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           {categories.map((cat) => {
             const catItems = improvements.filter((i) => i.category === cat);
             const score = categoryScore(catItems);
-            const count = catItems.length;
             return (
               <div key={cat} className="flex flex-col gap-3">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[15px] font-bold uppercase tracking-[0.05em] text-foreground">
-                    {cat}
-                  </span>
-                  <span className="text-caption text-muted-foreground">
-                    {String(count).padStart(2, "0")} open
-                  </span>
-                </div>
+                <span className="text-[15px] font-bold uppercase tracking-[0.05em] text-foreground">
+                  {cat}
+                </span>
                 <div className="flex items-end justify-between gap-4">
                   <div className="text-[44px] font-bold leading-none text-foreground">
                     {score}
@@ -139,8 +137,8 @@ function AnalyticsPage() {
       </section>
 
       {/* Improvement cards */}
-      <section className="grid grid-cols-1 gap-0 border-t border-border md:grid-cols-2">
-        {improvements.map((item, idx) => {
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {topImprovements.map((item) => {
           const priorityTone =
             item.priority === "High"
               ? "text-primary"
@@ -150,9 +148,7 @@ function AnalyticsPage() {
           return (
             <article
               key={item.id}
-              className={`flex flex-col gap-3 border-b border-border bg-card p-8 ${
-                idx % 2 === 0 ? "md:border-r" : ""
-              }`}
+              className="flex flex-col gap-3 rounded-lg border border-border bg-card p-8"
             >
               <div className="flex items-start justify-between gap-4">
                 <h3 className="text-[20px] font-bold leading-tight text-foreground">

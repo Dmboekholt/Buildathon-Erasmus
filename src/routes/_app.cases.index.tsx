@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { listCases } from "@/lib/cases.functions";
 
 export const Route = createFileRoute("/_app/cases/")({
@@ -8,10 +9,11 @@ export const Route = createFileRoute("/_app/cases/")({
 });
 
 function CasesPage() {
+  const juniorId = getActiveJuniorId();
   const fetchCases = useServerFn(listCases);
   const { data, isLoading } = useQuery({
-    queryKey: ["cases"],
-    queryFn: () => fetchCases(),
+    queryKey: ["cases", juniorId],
+    queryFn: () => fetchCases({ data: { juniorId } }),
   });
 
   return (
@@ -31,8 +33,8 @@ function CasesPage() {
       ) : (data ?? []).length === 0 ? (
         <div className="text-caption text-muted-foreground">No cases yet.</div>
       ) : (
-        <div className="grid grid-cols-1 gap-0 border-t border-border md:grid-cols-2">
-          {(data ?? []).map((c, idx) => {
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {(data ?? []).map((c) => {
             const priorityTone =
               c.priority === "high"
                 ? "text-primary"
@@ -44,9 +46,7 @@ function CasesPage() {
                 key={c.id}
                 to="/cases/$caseId"
                 params={{ caseId: c.id }}
-                className={`group flex flex-col gap-6 border-b border-border bg-card p-8 transition-colors hover:bg-muted ${
-                  idx % 2 === 0 ? "md:border-r" : ""
-                }`}
+                className="group flex flex-col gap-6 rounded-lg border border-border bg-card p-8 transition-colors hover:bg-muted"
               >
                 <div className="flex items-start justify-between gap-4">
                   <h2 className="text-[22px] font-bold leading-tight text-foreground group-hover:text-primary">

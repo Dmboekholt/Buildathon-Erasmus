@@ -42,7 +42,11 @@ INSERT INTO public.improvements (junior_id, title, area, category, priority) VAL
   ('11111111-1111-1111-1111-111111111111', 'Document conviction triggers', 'Process', 'Decision Making', 'High'),
   ('11111111-1111-1111-1111-111111111111', 'Map customer concentration shifts', 'Market analysis', 'Insights', 'Low'),
   ('22222222-2222-2222-2222-222222222222', 'Reconcile inventory step-up', 'Accounting', 'Judgement', 'Medium'),
-  ('33333333-3333-3333-3333-333333333333', 'Stress-test market sizing', 'Strategy', 'Insights', 'High');
+  ('22222222-2222-2222-2222-222222222222', 'Validate TSA exit cost build', 'Carve-out', 'Decision Making', 'High'),
+  ('22222222-2222-2222-2222-222222222222', 'Document NWC peg methodology', 'Working capital', 'Insights', 'Medium'),
+  ('33333333-3333-3333-3333-333333333333', 'Stress-test market sizing', 'Strategy', 'Insights', 'High'),
+  ('33333333-3333-3333-3333-333333333333', 'Triangulate NRR cohort data', 'Unit economics', 'Judgement', 'Medium'),
+  ('33333333-3333-3333-3333-333333333333', 'Map competitive win-loss themes', 'Market', 'Decision Making', 'Low');
 
 INSERT INTO public.score_snapshots (
   id, junior_id, project_id, scored_at,
@@ -59,9 +63,39 @@ INSERT INTO public.score_snapshots (
   ('d3000003-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', now() - interval '15 days', 7.0, 7.5, 6.5, 7.0, '1')
 ON CONFLICT (id) DO NOTHING;
 
-UPDATE public.cases
-SET assignee_id = '11111111-1111-1111-1111-111111111111'
-WHERE id = 'a1111111-1111-1111-1111-111111111111';
+-- Three cases, one per junior (Thermanova seeded in bootstrap / migration)
+INSERT INTO public.cases (
+  id, title, company, industry, summary, status, priority, assignee_id, metadata
+) VALUES (
+  'a2222222-2222-2222-2222-222222222222',
+  'Northgate carve-out diligence',
+  'Northgate Components Ltd',
+  'Industrial components',
+  'Carve-out of the precision fasteners division from a diversified industrial group; focus on stand-alone cost base and TSAs.',
+  'in_review',
+  'medium',
+  '22222222-2222-2222-2222-222222222222',
+  '{"investment_highlights_as_written":["Division generates £84m revenue with 19% EBITDA margin post-allocation adjustments.","Pro forma stand-alone SG&A reduction of £6.2m achievable within 18 months of separation."],"company_profile":{"description":"Northgate manufactures precision fasteners for automotive and industrial OEMs.","divisions":[{"name":"Automotive OEM","fy2024_revenue_share":"58%"},{"name":"Industrial aftermarket","fy2024_revenue_share":"42%"}]},"financials":{"currency":"GBP millions","historical":[{"fy":"FY2024","revenue":84.0,"ebitda":15.9,"ebitda_margin":"18.9%"}]},"decisions":[{"id":"d1","section":"Carve-out","claim":"TSAs can be exited within 24 months without revenue disruption.","analyst_rationale_as_written":"ERP migration runbook tested in Q3 2024."},{"id":"d2","section":"Accounting","claim":"Inventory step-up amortization should be modelled over 3 years.","analyst_rationale_as_written":"78% of affected inventory cycles within 36 months."}],"management":{"summary":"Division MD (12 years) leading separation workstream."}}'::jsonb
+),
+(
+  'a3333333-3333-3333-3333-333333333333',
+  'Meridian SaaS growth equity',
+  'Meridian Analytics Inc',
+  'B2B vertical SaaS',
+  'Minority growth investment in a workflow analytics platform for mid-market insurers; emphasis on NRR, cohort payback, and competitive moat.',
+  'in_review',
+  'high',
+  '33333333-3333-3333-3333-333333333333',
+  '{"investment_highlights_as_written":["ARR of $48m growing 42% YoY with net revenue retention of 118%.","Gross margin of 81% with CAC payback under 14 months on 2024 cohorts."],"company_profile":{"description":"Meridian provides claims and underwriting workflow software to regional insurers.","divisions":[{"name":"Subscription ARR","fy2024_revenue_share":"92%"},{"name":"Professional services","fy2024_revenue_share":"8%"}]},"financials":{"currency":"USD millions","historical":[{"fy":"FY2024","revenue":48.2,"ebitda":2.4,"ebitda_margin":"5.0%"}]},"decisions":[{"id":"d1","section":"Market","claim":"EU mid-market adds $120m serviceable opportunity by 2028.","analyst_rationale_as_written":"Benelux pilot at 110% of UK ACV."},{"id":"d2","section":"Unit Economics","claim":"Rule-of-40 profile sustainable at current sales efficiency.","analyst_rationale_as_written":"Growth plus FCF margin exceeds 40% in base case."}],"management":{"summary":"Founder-CEO and CRO hired 2023 from scale-up competitor."}}'::jsonb
+)
+ON CONFLICT (id) DO UPDATE SET
+  title = EXCLUDED.title,
+  assignee_id = EXCLUDED.assignee_id,
+  metadata = EXCLUDED.metadata,
+  updated_at = now();
+
+UPDATE public.cases SET assignee_id = '11111111-1111-1111-1111-111111111111'
+  WHERE id = 'a1111111-1111-1111-1111-111111111111';
 
 INSERT INTO public.curriculum_progress (analyst_id, level) VALUES
   ('11111111-1111-1111-1111-111111111111', 1),

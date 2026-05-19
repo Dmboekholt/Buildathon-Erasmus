@@ -86,7 +86,7 @@ function CurriculumCasePage() {
         )}
       </header>
 
-      <section className="mb-12 border border-border bg-muted p-10">
+      <section className="mb-12 rounded-lg border border-border bg-card p-10">
         <div className="eyebrow mb-4">Case brief</div>
         <p className="whitespace-pre-line text-body text-foreground">
           {kase.case_text}
@@ -107,7 +107,7 @@ function CurriculumCasePage() {
               (p) => p.questionId === q.id,
             )?.score;
             return (
-              <div key={q.id} className="border border-border bg-card p-8">
+              <div key={q.id} className="rounded-lg border border-border bg-card p-8">
                 <div className="mb-3 flex items-baseline justify-between gap-4">
                   <h3 className="text-[18px] font-bold text-foreground">
                     {String(idx + 1).padStart(2, "0")}. {q.prompt}
@@ -124,7 +124,7 @@ function CurriculumCasePage() {
                   </p>
                 )}
                 <textarea
-                  className="min-h-[140px] w-full resize-y border border-border bg-background p-4 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="min-h-[140px] w-full resize-y rounded-md border border-border bg-background p-4 text-body text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Write your answer."
                   value={answers[q.id] ?? ""}
                   onChange={(e) =>
@@ -139,7 +139,7 @@ function CurriculumCasePage() {
       </section>
 
       {result && (
-        <section className="mb-12 border border-border bg-muted p-10">
+        <section className="mb-12 rounded-lg border border-border bg-card p-10">
           <div className="eyebrow mb-3">Result</div>
           <div className="flex items-end justify-between gap-6">
             <div>
@@ -169,7 +169,7 @@ function CurriculumCasePage() {
           type="button"
           onClick={() => mutation.mutate()}
           disabled={mutation.isPending || questions.length === 0}
-          className="inline-flex items-center gap-3 bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="inline-flex items-center gap-3 rounded-md bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
           {mutation.isPending ? "Scoring." : "Check my answers"}
         </button>

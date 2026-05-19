@@ -171,7 +171,7 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-md border border-border bg-card px-5 py-5">
+      <div className="rounded-lg border border-border bg-card px-5 py-5">
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-col gap-1.5">
             <span className="text-caption text-muted-foreground">
@@ -214,7 +214,7 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
       </div>
 
       {hasEnded && scoring && (
-        <div className="rounded-md border border-border bg-card px-5 py-5">
+        <div className="rounded-lg border border-border bg-card px-5 py-5">
           <div className="text-caption text-muted-foreground">
             Scoring your review.
           </div>
@@ -228,7 +228,7 @@ function ReviewSessionInner({ analystWork, company, caseId }: Props) {
 
 function EvaluationCard({ evaluation }: { evaluation: EvaluationResult }) {
   return (
-    <div className="rounded-md border border-border bg-card px-5 py-5">
+    <div className="rounded-lg border border-border bg-card px-5 py-5">
       <div className="flex items-baseline justify-between">
         <h3 className="text-section text-foreground">Review feedback</h3>
         <div className="font-mono text-section text-foreground">

@@ -56,15 +56,13 @@ function CurriculumPage() {
           No assignments available yet.
         </p>
       ) : (
-        <section className="grid grid-cols-1 gap-0 border-t border-border md:grid-cols-2">
-          {cases.map((c, idx) => (
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {cases.map((c) => (
             <Link
               key={c.id}
               to="/curriculum/$caseId"
               params={{ caseId: c.id }}
-              className={`group flex flex-col gap-3 border-b border-border bg-card p-8 transition-colors hover:bg-muted ${
-                idx % 2 === 0 ? "md:border-r" : ""
-              }`}
+              className="group flex flex-col gap-3 rounded-lg border border-border bg-card p-8 transition-colors hover:bg-muted"
             >
               <div className="flex items-start justify-between gap-4">
                 <h3 className="text-[20px] font-bold leading-tight text-foreground">
