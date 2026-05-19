@@ -1,5 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { BarChart3, FolderOpen, GraduationCap } from "lucide-react";
+import {
+  ClipboardList,
+  FolderOpen,
+  GraduationCap,
+  LayoutDashboard,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,13 +16,34 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { WorkspaceSwitcher } from "@/components/layout/WorkspaceSwitcher";
+import { BdoLogo } from "@/components/brand/BdoLogo";
 
-const items = [
-  { title: "Analytics", url: "/", icon: BarChart3 },
-  { title: "Cases", url: "/cases", icon: FolderOpen },
-  { title: "Learning Curriculum", url: "/curriculum", icon: GraduationCap },
+const navSections = [
+  {
+    label: "Current work",
+    items: [
+      { title: "Improvements", url: "/", icon: ClipboardList },
+      { title: "Current work", url: "/cases", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Practice",
+    items: [
+      {
+        title: "Practice dashboard",
+        url: "/practice",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Learning curriculum",
+        url: "/curriculum",
+        icon: GraduationCap,
+      },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -28,60 +54,52 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5 px-2 py-3">
-          <div
-            aria-hidden="true"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 3v18" />
-              <path d="M3 8h6" />
-              <path d="M3 14h6" />
-              <path d="M14 4h6l-3 6 3 0a3 3 0 1 1-6 0" />
-            </svg>
-          </div>
-          <div className="leading-tight group-data-[collapsible=icon]:hidden">
-            <div className="text-body font-medium text-sidebar-foreground">
-              Judgment ledger
-            </div>
-            <div className="text-caption text-muted-foreground">
-              Investment case reviews
-            </div>
-          </div>
+        <div className="flex items-center px-3 py-4 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-2">
+          <BdoLogo className="h-7 w-auto group-data-[collapsible=icon]:h-5" />
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="eyebrow px-2">
-            Workspace
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="rounded-md"
-                  >
-                    <Link to={item.url} className="flex items-center gap-2.5">
-                      <item.icon className="h-4 w-4" />
-                      <span className="text-body">{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {navSections.map((section, index) => (
+          <div key={section.label}>
+            {index > 0 && <SidebarSeparator className="my-4" />}
+            <SidebarGroup className={index > 0 ? "mt-2" : undefined}>
+              <SidebarGroupLabel className="px-3 text-[11px] font-bold uppercase leading-4 tracking-[0.08em] text-primary">
+                {section.label}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {section.items.map((item) => {
+                    const active = isActive(item.url);
+                    return (
+                      <SidebarMenuItem key={item.title}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={active}
+                          size="sm"
+                          className="rounded-none"
+                        >
+                          <Link
+                            to={item.url}
+                            className={`flex items-center gap-2.5 border-l-2 ${
+                              active
+                                ? "border-l-primary text-primary"
+                                : "border-l-transparent text-foreground"
+                            }`}
+                          >
+                            <item.icon className="h-3.5 w-3.5" />
+                            <span className="text-[13px] font-bold uppercase tracking-[0.05em]">
+                              {item.title}
+                            </span>
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </div>
+        ))}
       </SidebarContent>
       <SidebarFooter className="mt-auto">
         <WorkspaceSwitcher mode="junior" />

@@ -1,7 +1,7 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import {
   CartesianGrid,
@@ -38,6 +38,7 @@ function rangeToFrom(range: Range): string | undefined {
 function JuniorDetailPage() {
   const { juniorId } = Route.useParams();
   const { managerId } = useWorkspace();
+  const navigate = useNavigate();
   const [range, setRange] = useState<Range>("90");
   const from = rangeToFrom(range);
 
@@ -49,6 +50,12 @@ function JuniorDetailPage() {
         data: { managerId, juniorId, from },
       }),
   });
+
+  useEffect(() => {
+    if (isError) {
+      navigate({ to: "/manager" });
+    }
+  }, [isError, navigate]);
 
   const chartData = useMemo(() => {
     return (data?.snapshots ?? []).map((s) => ({

@@ -2,24 +2,19 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { LayoutDashboard, Users } from "lucide-react";
-import {
-  useWorkspace,
-  type WorkspaceMode,
-  getActiveJuniorId,
-  setWorkspaceMode,
-} from "@/hooks/use-workspace";
+import { useWorkspace, type WorkspaceMode } from "@/hooks/use-workspace";
 import { listManagers } from "@/lib/manager.functions";
 
 const JUNIOR_LABELS: Record<string, string> = {
   "11111111-1111-1111-1111-111111111111": "Sam Patel",
-  "j2222222-2222-2222-2222-222222222222": "Priya Sharma",
-  "j3333333-3333-3333-3333-333333333333": "Tom Okonkwo",
+  "22222222-2222-2222-2222-222222222222": "Priya Sharma",
+  "33333333-3333-3333-3333-333333333333": "Tom Okonkwo",
 };
 
 export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
   const navigate = useNavigate();
-  const { managerId, selectManager, selectJunior } = useWorkspace();
-  const juniorId = getActiveJuniorId();
+  const { managerId, juniorId, selectManager, selectJunior, switchMode } =
+    useWorkspace();
   const fetchManagers = useServerFn(listManagers);
   const { data: managers } = useQuery({
     queryKey: ["managers"],
@@ -28,12 +23,12 @@ export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
   });
 
   const goToManager = () => {
-    setWorkspaceMode("manager");
+    switchMode("manager");
     navigate({ to: "/manager" });
   };
 
   const goToJunior = () => {
-    setWorkspaceMode("junior");
+    switchMode("junior");
     navigate({ to: "/" });
   };
 
@@ -64,7 +59,7 @@ export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
           <button
             type="button"
             onClick={goToManager}
-            className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2.5 text-left text-body text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-left text-caption text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
           >
             <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>Management dashboard</span>
@@ -97,7 +92,7 @@ export function WorkspaceSwitcher({ mode }: { mode: WorkspaceMode }) {
           <button
             type="button"
             onClick={goToJunior}
-            className="flex w-full items-center gap-2.5 rounded-md border border-border bg-background px-3 py-2.5 text-left text-body text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
+            className="flex w-full items-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-left text-caption text-foreground transition-colors hover:border-foreground/40 hover:bg-muted/50"
           >
             <LayoutDashboard className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>Junior workspace</span>

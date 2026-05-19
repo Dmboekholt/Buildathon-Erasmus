@@ -64,72 +64,68 @@ CREATE POLICY "demo_all_teams" ON public.teams FOR ALL USING (true) WITH CHECK (
 CREATE POLICY "demo_all_team_members" ON public.team_members FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "demo_all_score_snapshots" ON public.score_snapshots FOR ALL USING (true) WITH CHECK (true);
 
--- Managers
+-- Managers (canonical UUIDs match app WorkspaceSwitcher)
 INSERT INTO public.profiles (id, full_name, phone, role, sector) VALUES
-  ('m1111111-1111-1111-1111-111111111111', 'Alex Chen', NULL, 'manager', 'Valuation'),
-  ('m2222222-2222-2222-2222-222222222222', 'Jordan Lee', NULL, 'manager', 'Strategy')
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Alex Chen', NULL, 'manager', 'Valuation'),
+  ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Jordan Lee', NULL, 'manager', 'Strategy')
 ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, role = EXCLUDED.role, sector = EXCLUDED.sector;
 
--- Juniors (J1 = existing Sam Patel)
+-- Juniors
 UPDATE public.profiles SET role = 'junior', sector = 'Valuation', full_name = 'Sam Patel'
   WHERE id = '11111111-1111-1111-1111-111111111111';
 
 INSERT INTO public.profiles (id, full_name, phone, role, sector) VALUES
-  ('j2222222-2222-2222-2222-222222222222', 'Priya Sharma', NULL, 'junior', 'Accounting'),
-  ('j3333333-3333-3333-3333-333333333333', 'Tom Okonkwo', NULL, 'junior', 'Strategy')
+  ('22222222-2222-2222-2222-222222222222', 'Priya Sharma', NULL, 'junior', 'Accounting'),
+  ('33333333-3333-3333-3333-333333333333', 'Tom Okonkwo', NULL, 'junior', 'Strategy')
 ON CONFLICT (id) DO UPDATE SET full_name = EXCLUDED.full_name, role = EXCLUDED.role, sector = EXCLUDED.sector;
 
 -- Projects
 INSERT INTO public.projects (id, name, sector) VALUES
-  ('p1111111-1111-1111-1111-111111111111', 'Project Alpha', 'Valuation'),
-  ('p2222222-2222-2222-2222-222222222222', 'Project Beta', 'Accounting'),
-  ('p3333333-3333-3333-3333-333333333333', 'Project Gamma', 'Strategy')
+  ('b1111111-1111-1111-1111-111111111111', 'Project Alpha', 'Valuation'),
+  ('b2222222-2222-2222-2222-222222222222', 'Project Beta', 'Accounting'),
+  ('b3333333-3333-3333-3333-333333333333', 'Project Gamma', 'Strategy')
 ON CONFLICT (id) DO NOTHING;
 
--- Project members: J1 with both managers on Alpha
+-- Project members: Sam with both managers on Alpha
 INSERT INTO public.project_members (project_id, profile_id, role) VALUES
-  ('p1111111-1111-1111-1111-111111111111', 'm1111111-1111-1111-1111-111111111111', 'manager'),
-  ('p1111111-1111-1111-1111-111111111111', 'm2222222-2222-2222-2222-222222222222', 'manager'),
-  ('p1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'junior'),
-  ('p2222222-2222-2222-2222-222222222222', 'm1111111-1111-1111-1111-111111111111', 'manager'),
-  ('p2222222-2222-2222-2222-222222222222', 'j2222222-2222-2222-2222-222222222222', 'junior'),
-  ('p3333333-3333-3333-3333-333333333333', 'm2222222-2222-2222-2222-222222222222', 'manager'),
-  ('p3333333-3333-3333-3333-333333333333', 'j3333333-3333-3333-3333-333333333333', 'junior')
+  ('b1111111-1111-1111-1111-111111111111', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'manager'),
+  ('b1111111-1111-1111-1111-111111111111', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'manager'),
+  ('b1111111-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'junior'),
+  ('b2222222-2222-2222-2222-222222222222', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'manager'),
+  ('b2222222-2222-2222-2222-222222222222', '22222222-2222-2222-2222-222222222222', 'junior'),
+  ('b3333333-3333-3333-3333-333333333333', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'manager'),
+  ('b3333333-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', 'junior')
 ON CONFLICT DO NOTHING;
 
--- Team: Alex leads Valuation pod, Priya member (team visibility for M1 -> J2)
+-- Team: Alex leads Valuation pod, Priya member
 INSERT INTO public.teams (id, name, manager_id) VALUES
-  ('t1111111-1111-1111-1111-111111111111', 'Valuation pod', 'm1111111-1111-1111-1111-111111111111')
+  ('e1111111-1111-1111-1111-111111111111', 'Valuation pod', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO public.team_members (team_id, profile_id) VALUES
-  ('t1111111-1111-1111-1111-111111111111', 'j2222222-2222-2222-2222-222222222222')
+  ('e1111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222')
 ON CONFLICT DO NOTHING;
 
--- Link demo case to J1
+-- Link demo case to Sam
 UPDATE public.cases SET assignee_id = '11111111-1111-1111-1111-111111111111'
   WHERE id = 'a1111111-1111-1111-1111-111111111111';
 
--- Score history (synthetic, past 8 weeks)
+-- Score history (synthetic)
 INSERT INTO public.score_snapshots (
   id, junior_id, project_id, scored_at,
   overall_score, decision_making_score, insights_score, judgement_score, rubric_version
 ) VALUES
-  ('s1000001-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'p1111111-1111-1111-1111-111111111111', now() - interval '56 days', 5.5, 5.0, 6.0, 5.5, '1'),
-  ('s1000001-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'p1111111-1111-1111-1111-111111111111', now() - interval '42 days', 6.0, 5.5, 6.5, 6.0, '1'),
-  ('s1000001-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'p1111111-1111-1111-1111-111111111111', now() - interval '28 days', 6.5, 6.0, 7.0, 6.5, '1'),
-  ('s1000001-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'p1111111-1111-1111-1111-111111111111', now() - interval '14 days', 7.0, 6.5, 7.5, 7.0, '1'),
-  ('s1000001-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'p1111111-1111-1111-1111-111111111111', now() - interval '3 days', 7.5, 7.0, 8.0, 7.5, '1'),
-  ('s2000002-0000-0000-0000-000000000001', 'j2222222-2222-2222-2222-222222222222', 'p2222222-2222-2222-2222-222222222222', now() - interval '49 days', 4.5, 4.0, 5.0, 4.5, '1'),
-  ('s2000002-0000-0000-0000-000000000002', 'j2222222-2222-2222-2222-222222222222', 'p2222222-2222-2222-2222-222222222222', now() - interval '35 days', 5.0, 4.5, 5.5, 5.0, '1'),
-  ('s2000002-0000-0000-0000-000000000003', 'j2222222-2222-2222-2222-222222222222', 'p2222222-2222-2222-2222-222222222222', now() - interval '21 days', 5.5, 5.0, 6.0, 5.5, '1'),
-  ('s2000002-0000-0000-0000-000000000004', 'j2222222-2222-2222-2222-222222222222', 'p2222222-2222-2222-2222-222222222222', now() - interval '7 days', 6.0, 5.5, 6.5, 6.0, '1'),
-  ('s3000003-0000-0000-0000-000000000001', 'j3333333-3333-3333-3333-333333333333', 'p3333333-3333-3333-3333-333333333333', now() - interval '45 days', 6.0, 6.5, 5.5, 6.0, '1'),
-  ('s3000003-0000-0000-0000-000000000002', 'j3333333-3333-3333-3333-333333333333', 'p3333333-3333-3333-3333-333333333333', now() - interval '30 days', 6.5, 7.0, 6.0, 6.5, '1'),
-  ('s3000003-0000-0000-0000-000000000003', 'j3333333-3333-3333-3333-333333333333', 'p3333333-3333-3333-3333-333333333333', now() - interval '15 days', 7.0, 7.5, 6.5, 7.0, '1'),
-  ('s3000003-0000-0000-0000-000000000004', 'j3333333-3333-3333-3333-333333333333', 'p3333333-3333-3333-3333-333333333333', now() - interval '2 days', 7.5, 8.0, 7.0, 7.5, '1')
+  ('d1000001-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', now() - interval '56 days', 5.5, 5.0, 6.0, 5.5, '1'),
+  ('d1000001-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', now() - interval '42 days', 6.0, 5.5, 6.5, 6.0, '1'),
+  ('d1000001-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', now() - interval '28 days', 6.5, 6.0, 7.0, 6.5, '1'),
+  ('d1000001-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', now() - interval '14 days', 7.0, 6.5, 7.5, 7.0, '1'),
+  ('d1000001-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'b1111111-1111-1111-1111-111111111111', now() - interval '3 days', 7.5, 7.0, 8.0, 7.5, '1'),
+  ('d2000002-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', now() - interval '49 days', 4.5, 4.0, 5.0, 4.5, '1'),
+  ('d2000002-0000-0000-0000-000000000002', '22222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', now() - interval '35 days', 5.0, 4.5, 5.5, 5.0, '1'),
+  ('d2000002-0000-0000-0000-000000000003', '22222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', now() - interval '21 days', 5.5, 5.0, 6.0, 5.5, '1'),
+  ('d2000002-0000-0000-0000-000000000004', '22222222-2222-2222-2222-222222222222', 'b2222222-2222-2222-2222-222222222222', now() - interval '7 days', 6.0, 5.5, 6.5, 6.0, '1'),
+  ('d3000003-0000-0000-0000-000000000001', '33333333-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', now() - interval '45 days', 6.0, 6.5, 5.5, 6.0, '1'),
+  ('d3000003-0000-0000-0000-000000000002', '33333333-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', now() - interval '30 days', 6.5, 7.0, 6.0, 6.5, '1'),
+  ('d3000003-0000-0000-0000-000000000003', '33333333-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', now() - interval '15 days', 7.0, 7.5, 6.5, 7.0, '1'),
+  ('d3000003-0000-0000-0000-000000000004', '33333333-3333-3333-3333-333333333333', 'b3333333-3333-3333-3333-333333333333', now() - interval '2 days', 7.5, 8.0, 7.0, 7.5, '1')
 ON CONFLICT (id) DO NOTHING;
-
--- Assign improvements to J1 for junior-scoped analytics demo
-UPDATE public.improvements SET junior_id = '11111111-1111-1111-1111-111111111111'
-  WHERE junior_id IS NULL;

@@ -1,13 +1,16 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { getActiveJuniorId } from "@/hooks/use-workspace";
+import { TrendingUp } from "lucide-react";
+
+import { PageCtaBanner } from "@/components/layout/PageCtaBanner";
+import { PageEyebrow } from "@/components/layout/PageEyebrow";
+import { PriorityBadge } from "@/components/layout/PriorityBadge";
+import { useWorkspace } from "@/hooks/use-workspace";
 import { listImprovements } from "@/lib/review.functions";
 
 export const Route = createFileRoute("/_app/")({
-  component: AnalyticsPage,
+  component: ImprovementsPage,
 });
 
 type Category = "Decision Making" | "Insights" | "Judgement";
@@ -22,6 +25,8 @@ type Improvement = {
 };
 
 const categories: Category[] = ["Decision Making", "Insights", "Judgement"];
+
+const MAX_IMPROVEMENT_CARDS = 6;
 
 const priorityWeight: Record<Priority, number> = {
   High: 3,
@@ -38,86 +43,57 @@ function categoryScore(items: Improvement[]) {
   return Math.min(100, Math.round((raw / 15) * 100));
 }
 
-function AnalyticsPage() {
-  const juniorId = getActiveJuniorId();
+function ImprovementsPage() {
+  const { juniorId } = useWorkspace();
   const fetchImprovements = useServerFn(listImprovements);
   const { data } = useQuery({
     queryKey: ["improvements", juniorId],
     queryFn: () => fetchImprovements({ data: { juniorId } }),
   });
   const improvements: Improvement[] = data ?? [];
-  return (
+  const topImprovements = [...improvements]
+    .sort(
+      (a, b) =>
+        (priorityWeight[b.priority as Priority] ?? 0) -
+        (priorityWeight[a.priority as Priority] ?? 0),
+    )
+    .slice(0, MAX_IMPROVEMENT_CARDS);
 
-    <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
-      {/* Hero */}
-      <header className="mb-14 flex items-end justify-between gap-8">
-        <div className="max-w-2xl">
-          <div className="eyebrow mb-4">00. Analytics</div>
-          <h1 className="font-display text-[44px] leading-[48px] tracking-[-0.025em] text-foreground">
-            Signals from every review,
-            <br />
-            <span className="text-muted-foreground">measured over time.</span>
-          </h1>
-          <p className="mt-4 text-body text-muted-foreground">
-            Track where decision making, insights, and judgement need the most
-            attention across your open cases.
-          </p>
-        </div>
-        <Link
-          to="/cases"
-          className="inline-flex h-11 items-center gap-2 rounded-pill bg-primary pl-5 pr-2 text-body text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          Browse cases
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-card/15 text-primary-foreground">
-            <ArrowRight className="h-3.5 w-3.5" />
-          </span>
-        </Link>
+  return (
+    <div className="mx-auto max-w-[1280px] px-[60px] py-20">
+      <header className="mb-10">
+        <PageEyebrow index="01" label="Improvements" />
+        <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
+          Open across the practice
+        </h1>
+        <p className="mt-2 max-w-2xl text-caption text-muted-foreground">
+          Improvement areas surfaced from your recent case reviews.
+        </p>
       </header>
 
-      {/* Section header */}
-      <div className="mb-8 flex items-baseline justify-between border-t border-border pt-6">
-        <div>
-          <div className="eyebrow">01.</div>
-          <h2 className="mt-1 text-section text-foreground">Improvements</h2>
-        </div>
-        <span className="font-mono text-caption text-muted-foreground">
-          {String(improvements.length).padStart(2, "0")} open
-        </span>
-      </div>
-
-      {/* Category score panel */}
-      <section className="mb-12 rounded-lg border border-border bg-card p-8">
-        <div className="mb-6 flex items-baseline justify-between">
-          <h3 className="text-section font-medium text-foreground">
-            Attention by category
-          </h3>
-          <span className="font-mono text-caption text-muted-foreground">
-            weighted by priority
-          </span>
-        </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+      <section className="mb-12 rounded-lg border border-border bg-card p-8 md:p-10">
+        <h2 className="mb-8 text-[20px] font-bold text-foreground">
+          Attention by category
+        </h2>
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           {categories.map((cat) => {
             const catItems = improvements.filter((i) => i.category === cat);
             const score = categoryScore(catItems);
-            const count = catItems.length;
             return (
               <div key={cat} className="flex flex-col gap-3">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-body text-foreground">{cat}</span>
-                  <span className="font-mono text-caption text-muted-foreground">
-                    {String(count).padStart(2, "0")} open
-                  </span>
-                </div>
-                <div className="flex items-end justify-between gap-4">
-                  <div className="font-display text-[36px] leading-none text-foreground">
+                <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                  {cat}
+                </span>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-[44px] font-bold leading-none text-foreground">
                     {score}
-                  </div>
-                  <span className="font-mono text-caption text-muted-foreground">
+                  </span>
+                  <span className="text-[15px] text-muted-foreground">
                     /100
                   </span>
                 </div>
                 <div
-                  className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                  className="h-1.5 w-full overflow-hidden rounded-full bg-border"
                   role="progressbar"
                   aria-valuenow={score}
                   aria-valuemin={0}
@@ -125,7 +101,7 @@ function AnalyticsPage() {
                   aria-label={`${cat} score`}
                 >
                   <div
-                    className="h-full rounded-full bg-foreground transition-[width] duration-500"
+                    className="h-full rounded-full bg-primary transition-[width] duration-500"
                     style={{ width: `${score}%` }}
                   />
                 </div>
@@ -135,40 +111,44 @@ function AnalyticsPage() {
         </div>
       </section>
 
-      {/* Improvement cards */}
-      <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        {improvements.map((item) => {
-          const priorityTone =
-            item.priority === "High"
-              ? "border-foreground/40 text-foreground"
-              : item.priority === "Medium"
-                ? "border-border text-muted-foreground"
-                : "border-border text-muted-foreground/70";
-          return (
-            <article
-              key={item.id}
-              className="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-5"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <h3 className="text-section font-medium text-foreground">
-                  {item.title}
-                </h3>
-                <Badge
-                  variant="outline"
-                  className={`shrink-0 rounded-pill bg-background px-2.5 py-0.5 text-caption font-mono font-normal uppercase tracking-wider ${priorityTone}`}
-                >
-                  {item.priority}
-                </Badge>
-              </div>
-              <div className="flex items-center gap-2 text-caption text-muted-foreground">
-                <span className="text-foreground">{item.category}</span>
-                <span aria-hidden="true">·</span>
-                <span>{item.area}</span>
-              </div>
-            </article>
-          );
-        })}
+      <section>
+        <h2 className="mb-6 text-[20px] font-bold text-foreground">
+          Top improvement areas
+        </h2>
+        {topImprovements.length === 0 ? (
+          <p className="text-[14px] text-muted-foreground">
+            No open improvement areas yet. Complete a case review to get
+            started.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {topImprovements.map((item) => (
+              <article
+                key={item.id}
+                className="flex items-center gap-4 rounded-lg border border-border bg-card px-6 py-5"
+              >
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[16px] font-bold leading-snug text-foreground">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1 text-[13px] text-muted-foreground">
+                    {item.category} · {item.area}
+                  </p>
+                </div>
+                <PriorityBadge priority={item.priority} />
+              </article>
+            ))}
+          </div>
+        )}
       </section>
+
+      <PageCtaBanner
+        icon={TrendingUp}
+        title="Small steps drive big improvements."
+        subtitle="Keep reviewing, keep improving."
+        linkTo="/cases"
+        linkLabel="Browse all cases"
+      />
     </div>
   );
 }

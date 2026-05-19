@@ -91,6 +91,149 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_attempts: {
+        Row: {
+          accuracy_score: number
+          alignment_ai: number
+          alignment_historical: number
+          alignment_senior: number
+          analyst_id: string
+          analyst_level: number
+          answers: Json
+          case_id: string
+          created_at: string
+          feedback: string | null
+          id: string
+          per_question_scores: Json
+          skill_indicators: Json
+          written_insight: string
+        }
+        Insert: {
+          accuracy_score?: number
+          alignment_ai?: number
+          alignment_historical?: number
+          alignment_senior?: number
+          analyst_id?: string
+          analyst_level?: number
+          answers?: Json
+          case_id: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          per_question_scores?: Json
+          skill_indicators?: Json
+          written_insight?: string
+        }
+        Update: {
+          accuracy_score?: number
+          alignment_ai?: number
+          alignment_historical?: number
+          alignment_senior?: number
+          analyst_id?: string
+          analyst_level?: number
+          answers?: Json
+          case_id?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          per_question_scores?: Json
+          skill_indicators?: Json
+          written_insight?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_attempts_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "curriculum_cases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      curriculum_cases: {
+        Row: {
+          ai_answer: string
+          case_text: string
+          created_at: string
+          difficulty: number
+          era: string | null
+          expected_insights: string[]
+          historical_answer: string
+          id: string
+          industry: string | null
+          junior_year: number
+          learning_objective: string
+          practice_area: string
+          questions: Json
+          senior_reasoning: string
+          slug: string
+          sort_order: number
+          source: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          ai_answer: string
+          case_text: string
+          created_at?: string
+          difficulty?: number
+          era?: string | null
+          expected_insights?: string[]
+          historical_answer: string
+          id?: string
+          industry?: string | null
+          junior_year?: number
+          learning_objective?: string
+          practice_area?: string
+          questions?: Json
+          senior_reasoning: string
+          slug: string
+          sort_order?: number
+          source?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          ai_answer?: string
+          case_text?: string
+          created_at?: string
+          difficulty?: number
+          era?: string | null
+          expected_insights?: string[]
+          historical_answer?: string
+          practice_area?: string
+          id?: string
+          industry?: string | null
+          junior_year?: number
+          learning_objective?: string
+          questions?: Json
+          senior_reasoning?: string
+          slug?: string
+          sort_order?: number
+          source?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      curriculum_progress: {
+        Row: {
+          analyst_id: string
+          level: number
+          updated_at: string
+        }
+        Insert: {
+          analyst_id?: string
+          level?: number
+          updated_at?: string
+        }
+        Update: {
+          analyst_id?: string
+          level?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       debriefs: {
         Row: {
           case_id: string | null
@@ -100,8 +243,6 @@ export type Database = {
           evaluation_json: Json | null
           id: string
           improvement_items: Json | null
-          junior_id: string | null
-          project_id: string | null
           questions_json: Json | null
           status: string
           task_id: string | null
@@ -115,8 +256,6 @@ export type Database = {
           evaluation_json?: Json | null
           id?: string
           improvement_items?: Json | null
-          junior_id?: string | null
-          project_id?: string | null
           questions_json?: Json | null
           status?: string
           task_id?: string | null
@@ -130,8 +269,6 @@ export type Database = {
           evaluation_json?: Json | null
           id?: string
           improvement_items?: Json | null
-          junior_id?: string | null
-          project_id?: string | null
           questions_json?: Json | null
           status?: string
           task_id?: string | null
@@ -153,7 +290,6 @@ export type Database = {
           category: string
           created_at: string
           id: string
-          junior_id: string | null
           priority: string
           source_debrief_id: string | null
           status: string
@@ -165,7 +301,6 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
-          junior_id?: string | null
           priority?: string
           source_debrief_id?: string | null
           status?: string
@@ -177,7 +312,6 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
-          junior_id?: string | null
           priority?: string
           source_debrief_id?: string | null
           status?: string
@@ -191,6 +325,7 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          junior_year: number | null
           phone: string | null
           role: string
           sector: string | null
@@ -199,6 +334,7 @@ export type Database = {
           created_at?: string
           full_name: string
           id?: string
+          junior_year?: number | null
           phone?: string | null
           role?: string
           sector?: string | null
@@ -207,123 +343,10 @@ export type Database = {
           created_at?: string
           full_name?: string
           id?: string
+          junior_year?: number | null
           phone?: string | null
           role?: string
           sector?: string | null
-        }
-        Relationships: []
-      }
-      project_members: {
-        Row: {
-          profile_id: string
-          project_id: string
-          role: string
-        }
-        Insert: {
-          profile_id: string
-          project_id: string
-          role: string
-        }
-        Update: {
-          profile_id?: string
-          project_id?: string
-          role?: string
-        }
-        Relationships: []
-      }
-      projects: {
-        Row: {
-          created_at: string
-          id: string
-          name: string
-          sector: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name: string
-          sector?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string
-          sector?: string | null
-        }
-        Relationships: []
-      }
-      score_snapshots: {
-        Row: {
-          debrief_id: string | null
-          decision_making_score: number
-          id: string
-          insights_score: number
-          judgement_score: number
-          junior_id: string
-          overall_score: number
-          project_id: string | null
-          rubric_version: string
-          scored_at: string
-        }
-        Insert: {
-          debrief_id?: string | null
-          decision_making_score: number
-          id?: string
-          insights_score: number
-          judgement_score: number
-          junior_id: string
-          overall_score: number
-          project_id?: string | null
-          rubric_version?: string
-          scored_at?: string
-        }
-        Update: {
-          debrief_id?: string | null
-          decision_making_score?: number
-          id?: string
-          insights_score?: number
-          judgement_score?: number
-          junior_id?: string
-          overall_score?: number
-          project_id?: string | null
-          rubric_version?: string
-          scored_at?: string
-        }
-        Relationships: []
-      }
-      team_members: {
-        Row: {
-          profile_id: string
-          team_id: string
-        }
-        Insert: {
-          profile_id: string
-          team_id: string
-        }
-        Update: {
-          profile_id?: string
-          team_id?: string
-        }
-        Relationships: []
-      }
-      teams: {
-        Row: {
-          created_at: string
-          id: string
-          manager_id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          manager_id: string
-          name: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          manager_id?: string
-          name?: string
         }
         Relationships: []
       }

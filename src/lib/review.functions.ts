@@ -5,6 +5,7 @@ import {
   getScoringPrompt,
   SCORING_RUBRIC_VERSION,
 } from "@/config/scoring";
+import { kimiChatJson } from "@/lib/kimi";
 
 const PRIORITY_ORDER = ["Low", "Medium", "High"] as const;
 type Priority = (typeof PRIORITY_ORDER)[number];
@@ -21,7 +22,7 @@ function bumpPriority(current: string, direction: "raise" | "lower"): Priority {
 
 export const listImprovements = createServerFn({ method: "GET" })
   .inputValidator((input) =>
-    z.object({ juniorId: z.string().uuid() }).parse(input),
+    z.object({ juniorId: z.string().min(1) }).parse(input),
   )
   .handler(async ({ data }) => {
     const { data: rows, error } = await supabaseAdmin
@@ -40,8 +41,8 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .object({
         caseId: z.string().uuid(),
         transcript: z.string().min(1).max(200_000),
-        juniorId: z.string().uuid(),
-        projectId: z.string().uuid().optional(),
+        juniorId: z.string().min(1),
+        projectId: z.string().min(1).optional(),
       })
       .parse(input),
   )
@@ -50,9 +51,9 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .from("debriefs")
       .insert({
         case_id: data.caseId,
-        transcript: data.transcript,
         junior_id: data.juniorId,
         project_id: data.projectId ?? null,
+        transcript: data.transcript,
         status: "pending",
       })
       .select("id")
@@ -102,9 +103,6 @@ export const scoreDebrief = createServerFn({ method: "POST" })
     z.object({ debriefId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data }): Promise<EvaluationResult> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
-
     const { data: debrief, error: dErr } = await supabaseAdmin
       .from("debriefs")
       .select("id, transcript, case_id, junior_id, project_id")
@@ -123,14 +121,14 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       caseContext = c;
     }
 
-    const improvementsQuery = supabaseAdmin
+    const juniorId = debrief.junior_id;
+    const existingQuery = supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority")
       .eq("status", "open");
-    if (debrief.junior_id) {
-      improvementsQuery.eq("junior_id", debrief.junior_id);
-    }
-    const { data: existing, error: iErr } = await improvementsQuery;
+    const { data: existing, error: iErr } = juniorId
+      ? await existingQuery.eq("junior_id", juniorId)
+      : await existingQuery;
     if (iErr) throw new Error(iErr.message);
 
     const { system, user } = getScoringPrompt({
@@ -139,40 +137,7 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       transcript: debrief.transcript ?? "",
     });
 
-    const aiRes = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-          response_format: { type: "json_object" },
-        }),
-      },
-    );
-
-    if (!aiRes.ok) {
-      const text = await aiRes.text();
-      if (aiRes.status === 429)
-        throw new Error("Rate limit reached. Please try again shortly.");
-      if (aiRes.status === 402)
-        throw new Error(
-          "AI credits exhausted. Add credits in Workspace settings.",
-        );
-      throw new Error(`AI gateway error ${aiRes.status}: ${text.slice(0, 200)}`);
-    }
-
-    const aiJson = (await aiRes.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const raw = aiJson.choices?.[0]?.message?.content ?? "{}";
+    const raw = await kimiChatJson({ system, user });
     let parsed: z.infer<typeof EvaluationSchema>;
     try {
       parsed = EvaluationSchema.parse(JSON.parse(raw));
@@ -233,8 +198,8 @@ export const scoreDebrief = createServerFn({ method: "POST" })
         area: n.area,
         category: n.category,
         priority: n.priority,
+        junior_id: juniorId,
         source_debrief_id: data.debriefId,
-        junior_id: debrief.junior_id,
       }));
       const { error, count } = await supabaseAdmin
         .from("improvements")
@@ -265,10 +230,10 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       })
       .eq("id", data.debriefId);
 
-    if (debrief.junior_id) {
+    if (juniorId) {
       await supabaseAdmin.from("score_snapshots").insert({
         debrief_id: data.debriefId,
-        junior_id: debrief.junior_id,
+        junior_id: juniorId,
         project_id: debrief.project_id,
         overall_score: parsed.overall_score,
         decision_making_score: parsed.decision_making_score,
@@ -277,6 +242,7 @@ export const scoreDebrief = createServerFn({ method: "POST" })
         rubric_version: SCORING_RUBRIC_VERSION,
       });
     }
+
 
     return {
       ...parsed,

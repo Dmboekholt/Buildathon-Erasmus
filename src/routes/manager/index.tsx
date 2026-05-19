@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -32,6 +32,10 @@ function TrendCell({ value }: { value: "up" | "down" | "flat" | null }) {
 function ManagerRosterPage() {
   const { managerId } = useWorkspace();
   const [projectId, setProjectId] = useState<string>("all");
+
+  useEffect(() => {
+    setProjectId("all");
+  }, [managerId]);
 
   const fetchManagers = useServerFn(listManagers);
   const fetchProjects = useServerFn(listManagerProjects);

@@ -9,6 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
+import { WorkspaceProvider } from "@/hooks/use-workspace";
 
 function NotFoundComponent() {
   return (
@@ -70,25 +71,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Judgment ledger" },
+      { title: "BDO Insight" },
       {
         name: "description",
         content:
-          "Investment case reviews. Read the memorandum, then defend the judgment.",
+          "BDO Insight. Sharper reviews, stronger judgement, measurable improvement.",
       },
-      { property: "og:title", content: "Judgment ledger" },
+      { property: "og:title", content: "BDO Insight" },
       {
         property: "og:description",
-        content: "Investment case reviews.",
+        content: "Sharper reviews, stronger judgement, measurable improvement.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:title", content: "Judgment ledger" },
-      { name: "description", content: "An enterprise financial application for managing and analyzing work products, cases, and improvements." },
-      { property: "og:description", content: "An enterprise financial application for managing and analyzing work products, cases, and improvements." },
-      { name: "twitter:description", content: "An enterprise financial application for managing and analyzing work products, cases, and improvements." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ccdf2b5e-a8f9-4b85-9d70-c5b2a97b8aea/id-preview-2c6ee1e0--176d084a-3533-4c33-92b6-89b88a1f3b72.lovable.app-1779131812903.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/ccdf2b5e-a8f9-4b85-9d70-c5b2a97b8aea/id-preview-2c6ee1e0--176d084a-3533-4c33-92b6-89b88a1f3b72.lovable.app-1779131812903.png" },
+      { name: "twitter:title", content: "BDO Insight" },
+      { name: "twitter:description", content: "Sharper reviews, stronger judgement, measurable improvement." },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -100,7 +97,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -129,7 +126,9 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <WorkspaceProvider>
+        <Outlet />
+      </WorkspaceProvider>
     </QueryClientProvider>
   );
 }
