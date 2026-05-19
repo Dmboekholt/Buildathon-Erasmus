@@ -46,34 +46,34 @@ export const listManagerProjects = createServerFn({ method: "GET" })
     return projects.sort((a, b) => a.name.localeCompare(b.name));
   });
 
+async function juniorIdsForManager(managerId: string): Promise<Set<string>> {
+  const { data: teamRows, error } = await supabaseAdmin
+    .from("teams")
+    .select("team_members(profile_id)")
+    .eq("manager_id", managerId);
+  if (error) throw new Error(error.message);
+
+  const ids = new Set<string>();
+  for (const team of teamRows ?? []) {
+    for (const m of team.team_members ?? []) {
+      if (m.profile_id) ids.add(m.profile_id);
+    }
+  }
+  return ids;
+}
+
 export const listVisibleJuniors = createServerFn({ method: "GET" })
   .inputValidator((input) =>
     z
       .object({
-        managerId: z.string().min(1),
-        projectId: z.string().min(1).optional(),
+        managerId: z.string().uuid(),
+        projectId: z.string().uuid().optional(),
       })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const { data: projectRows, error: pErr } = await supabaseAdmin
-      .from("project_members")
-      .select("project_id, profile_id, role, projects(id, name, sector)")
-      .eq("role", "junior");
-    if (pErr) throw new Error(pErr.message);
-
-    const { data: teamRows, error: tErr } = await supabaseAdmin
-      .from("teams")
-      .select("id, team_members(profile_id)")
-      .eq("manager_id", data.managerId);
-    if (tErr) throw new Error(tErr.message);
-
-    const teamJuniorIds = new Set<string>();
-    for (const team of teamRows ?? []) {
-      for (const m of team.team_members ?? []) {
-        if (m.profile_id) teamJuniorIds.add(m.profile_id);
-      }
-    }
+    let juniorIds = await juniorIdsForManager(data.managerId);
+    if (juniorIds.size === 0) return [];
 
     const { data: mgrProjects, error: mpErr } = await supabaseAdmin
       .from("project_members")
@@ -85,20 +85,33 @@ export const listVisibleJuniors = createServerFn({ method: "GET" })
     const managerProjectIds = new Set(
       (mgrProjects ?? []).map((r) => r.project_id as string),
     );
+
     if (data.projectId) {
-      if (!managerProjectIds.has(data.projectId)) {
-        for (const id of teamJuniorIds) managerProjectIds.add(data.projectId);
-      }
+      if (!managerProjectIds.has(data.projectId)) return [];
+      const { data: onProject, error: opErr } = await supabaseAdmin
+        .from("project_members")
+        .select("profile_id")
+        .eq("project_id", data.projectId)
+        .eq("role", "junior")
+        .in("profile_id", [...juniorIds]);
+      if (opErr) throw new Error(opErr.message);
+      const onProjectIds = new Set((onProject ?? []).map((r) => r.profile_id));
+      juniorIds = new Set([...juniorIds].filter((id) => onProjectIds.has(id)));
+      if (juniorIds.size === 0) return [];
     }
 
-    const juniorIds = new Set<string>();
     const projectsByJunior = new Map<string, ManagerProject[]>();
+    const { data: projectRows, error: pErr } = await supabaseAdmin
+      .from("project_members")
+      .select("project_id, profile_id, projects(id, name, sector)")
+      .eq("role", "junior")
+      .in("profile_id", [...juniorIds]);
+    if (pErr) throw new Error(pErr.message);
 
     for (const row of projectRows ?? []) {
       if (!managerProjectIds.has(row.project_id)) continue;
       if (data.projectId && row.project_id !== data.projectId) continue;
 
-      juniorIds.add(row.profile_id);
       const p = row.projects as ManagerProject | null;
       if (p) {
         const list = projectsByJunior.get(row.profile_id) ?? [];
@@ -106,10 +119,6 @@ export const listVisibleJuniors = createServerFn({ method: "GET" })
         projectsByJunior.set(row.profile_id, list);
       }
     }
-
-    for (const id of teamJuniorIds) juniorIds.add(id);
-
-    if (juniorIds.size === 0) return [];
 
     const { data: profiles, error: profErr } = await supabaseAdmin
       .from("profiles")
@@ -186,6 +195,9 @@ export const getJuniorProgress = createServerFn({ method: "GET" })
       .parse(input),
   )
   .handler(async ({ data }) => {
+    const allowed = await juniorIdsForManager(data.managerId);
+    if (!allowed.has(data.juniorId)) throw notFound();
+
     const { data: profile, error } = await supabaseAdmin
       .from("profiles")
       .select("id, full_name, sector")

@@ -1,5 +1,10 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { ClipboardList, FolderOpen } from "lucide-react";
+import {
+  ClipboardList,
+  FolderOpen,
+  GraduationCap,
+  LayoutDashboard,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +27,21 @@ const navSections = [
     items: [
       { title: "Improvements", url: "/", icon: ClipboardList },
       { title: "Current work", url: "/cases", icon: FolderOpen },
+    ],
+  },
+  {
+    label: "Practice",
+    items: [
+      {
+        title: "Practice dashboard",
+        url: "/practice",
+        icon: LayoutDashboard,
+      },
+      {
+        title: "Learning curriculum",
+        url: "/curriculum",
+        icon: GraduationCap,
+      },
     ],
   },
 ];

@@ -16,6 +16,26 @@ export const Route = createFileRoute("/_app/curriculum/$caseId")({
 
 type Question = { id: string; prompt: string; guidance?: string };
 
+type PerQuestionResult = {
+  questionId: string;
+  score: number;
+  feedback?: string;
+  demonstrated?: string[];
+  missing?: string[];
+};
+
+type SubmitResult = {
+  accuracy: number;
+  passed: boolean;
+  summary: string;
+  strengths: string[];
+  gaps: string[];
+  skillIndicators: string[];
+  perQuestion: PerQuestionResult[];
+  leveledUp: boolean;
+  level: number;
+};
+
 function CurriculumCasePage() {
   const { caseId } = Route.useParams();
   const juniorId = getActiveJuniorId();
@@ -34,12 +54,7 @@ function CurriculumCasePage() {
   );
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [result, setResult] = useState<{
-    accuracy: number;
-    perQuestion: { questionId: string; score: number }[];
-    leveledUp: boolean;
-    level: number;
-  } | null>(null);
+  const [result, setResult] = useState<SubmitResult | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () =>
@@ -52,9 +67,16 @@ function CurriculumCasePage() {
             answer: answers[q.id] ?? "",
           })),
         },
-      }),
+      }) as Promise<SubmitResult>,
     onSuccess: (r) => setResult(r),
   });
+
+  const errorMessage =
+    mutation.error instanceof Error
+      ? mutation.error.message.includes("KIMI_2_6_API_KEY")
+        ? "AI scoring is not configured. Add KIMI_2_6_API_KEY to your environment."
+        : mutation.error.message
+      : null;
 
   if (isLoading || !kase) {
     return (
@@ -63,6 +85,8 @@ function CurriculumCasePage() {
       </div>
     );
   }
+
+  const year = (kase.junior_year ?? kase.difficulty ?? 1) as number;
 
   return (
     <div className="mx-auto max-w-[1280px] py-20 px-[60px]">
@@ -76,7 +100,7 @@ function CurriculumCasePage() {
 
       <header className="mb-12">
         <div className="eyebrow mb-5">
-          Level {kase.difficulty} · {kase.industry ?? "Case"}
+          Year {year} · {kase.industry ?? "Case"}
         </div>
         <h1 className="text-[40px] font-bold leading-[1.05] tracking-[-0.015em] text-foreground">
           {kase.title}
@@ -87,7 +111,13 @@ function CurriculumCasePage() {
       </header>
 
       <section className="mb-12 rounded-lg border border-border bg-card p-10">
-        <div className="eyebrow mb-4">Case brief</div>
+        <div className="eyebrow mb-4">01 Learn</div>
+        {kase.learning_objective?.trim() && (
+          <p className="mb-6 text-body font-medium text-foreground">
+            {kase.learning_objective}
+          </p>
+        )}
+        <div className="eyebrow mb-3 text-muted-foreground">Case brief</div>
         <p className="whitespace-pre-line text-body text-foreground">
           {kase.case_text}
         </p>
@@ -99,22 +129,27 @@ function CurriculumCasePage() {
           <h2 className="mt-2 text-[24px] font-bold leading-tight text-foreground">
             Write your analysis
           </h2>
+          <p className="mt-2 text-caption text-muted-foreground">
+            Open-ended answers only. Use complete sentences and link your
+            reasoning to the case facts.
+          </p>
         </div>
 
         <div className="flex flex-col gap-8">
           {questions.map((q, idx) => {
-            const score = result?.perQuestion.find(
-              (p) => p.questionId === q.id,
-            )?.score;
+            const pq = result?.perQuestion.find((p) => p.questionId === q.id);
             return (
-              <div key={q.id} className="rounded-lg border border-border bg-card p-8">
+              <div
+                key={q.id}
+                className="rounded-lg border border-border bg-card p-8"
+              >
                 <div className="mb-3 flex items-baseline justify-between gap-4">
                   <h3 className="text-[18px] font-bold text-foreground">
                     {String(idx + 1).padStart(2, "0")}. {q.prompt}
                   </h3>
-                  {typeof score === "number" && (
+                  {typeof pq?.score === "number" && (
                     <span className="text-[14px] font-bold uppercase tracking-[0.08em] text-primary">
-                      {score}/100
+                      {pq.score}/100
                     </span>
                   )}
                 </div>
@@ -132,6 +167,11 @@ function CurriculumCasePage() {
                   }
                   disabled={mutation.isPending}
                 />
+                {pq?.feedback && (
+                  <p className="mt-4 whitespace-pre-line border-t border-border pt-4 text-body text-foreground">
+                    {pq.feedback}
+                  </p>
+                )}
               </div>
             );
           })}
@@ -140,14 +180,14 @@ function CurriculumCasePage() {
 
       {result && (
         <section className="mb-12 rounded-lg border border-border bg-card p-10">
-          <div className="eyebrow mb-3">Result</div>
+          <div className="eyebrow mb-3">03 Your feedback</div>
           <div className="flex items-end justify-between gap-6">
             <div>
               <div className="text-[44px] font-bold leading-none text-foreground">
                 {result.accuracy}
               </div>
               <span className="text-caption text-muted-foreground">
-                accuracy /100
+                overall /100 · {result.passed ? "Passed" : "Keep practicing"}
               </span>
             </div>
             <div className="text-right">
@@ -161,6 +201,41 @@ function CurriculumCasePage() {
               )}
             </div>
           </div>
+          {result.summary && (
+            <p className="mt-6 text-body text-foreground">{result.summary}</p>
+          )}
+          {result.strengths.length > 0 && (
+            <div className="mt-6">
+              <div className="eyebrow mb-2">Strengths</div>
+              <ul className="list-inside list-disc text-body text-foreground">
+                {result.strengths.map((s) => (
+                  <li key={s}>{s}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {result.gaps.length > 0 && (
+            <div className="mt-6">
+              <div className="eyebrow mb-2">Gaps to close</div>
+              <ul className="list-inside list-disc text-body text-foreground">
+                {result.gaps.map((g) => (
+                  <li key={g}>{g}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {result.skillIndicators.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {result.skillIndicators.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-md border border-border px-3 py-1 text-caption font-bold text-foreground"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </section>
       )}
 
@@ -168,7 +243,7 @@ function CurriculumCasePage() {
         (kase.historical_answer.trim() || kase.senior_reasoning.trim()) && (
           <section className="mb-12">
             <div className="mb-8 border-t-2 border-foreground pt-6">
-              <div className="eyebrow">03 Learn from the archive</div>
+              <div className="eyebrow">04 Learn from the archive</div>
               <h2 className="mt-2 text-[24px] font-bold leading-tight text-foreground">
                 Compare with past work
               </h2>
@@ -194,19 +269,27 @@ function CurriculumCasePage() {
           </section>
         )}
 
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={() => mutation.mutate()}
-          disabled={mutation.isPending || questions.length === 0}
-          className="inline-flex items-center gap-3 rounded-md bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-        >
-          {mutation.isPending ? "Scoring." : "Check my answers"}
-        </button>
-        {mutation.isError && (
-          <span className="text-caption text-primary">
-            Could not submit. Try again.
-          </span>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => mutation.mutate()}
+            disabled={mutation.isPending || questions.length === 0}
+            className="inline-flex items-center gap-3 rounded-md bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+          >
+            {mutation.isPending ? "Checking your answers." : "Check my answers"}
+          </button>
+          {result?.passed && (
+            <Link
+              to="/practice"
+              className="text-[14px] font-bold uppercase tracking-[0.08em] text-primary hover:underline"
+            >
+              View practice dashboard
+            </Link>
+          )}
+        </div>
+        {errorMessage && (
+          <span className="text-caption text-primary">{errorMessage}</span>
         )}
       </div>
     </div>

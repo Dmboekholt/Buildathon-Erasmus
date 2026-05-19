@@ -161,8 +161,11 @@ export type Database = {
           historical_answer: string
           id: string
           industry: string | null
+          junior_year: number
+          learning_objective: string
           questions: Json
           senior_reasoning: string
+          sort_order: number
           source: string
           title: string
           updated_at: string
@@ -177,8 +180,11 @@ export type Database = {
           historical_answer: string
           id?: string
           industry?: string | null
+          junior_year?: number
+          learning_objective?: string
           questions?: Json
           senior_reasoning: string
+          sort_order?: number
           source?: string
           title: string
           updated_at?: string
@@ -193,8 +199,11 @@ export type Database = {
           historical_answer?: string
           id?: string
           industry?: string | null
+          junior_year?: number
+          learning_objective?: string
           questions?: Json
           senior_reasoning?: string
+          sort_order?: number
           source?: string
           title?: string
           updated_at?: string
@@ -310,22 +319,28 @@ export type Database = {
           created_at: string
           full_name: string
           id: string
+          junior_year: number | null
           phone: string | null
           role: string
+          sector: string | null
         }
         Insert: {
           created_at?: string
           full_name: string
           id?: string
+          junior_year?: number | null
           phone?: string | null
           role?: string
+          sector?: string | null
         }
         Update: {
           created_at?: string
           full_name?: string
           id?: string
+          junior_year?: number | null
           phone?: string | null
           role?: string
+          sector?: string | null
         }
         Relationships: []
       }
