@@ -21,7 +21,7 @@ export const listManagers = createServerFn({ method: "GET" }).handler(async () =
 });
 
 export const listManagerProjects = createServerFn({ method: "GET" })
-  .inputValidator((input) => z.object({ managerId: z.string().uuid() }).parse(input))
+  .inputValidator((input) => z.object({ managerId: z.string().min(1) }).parse(input))
   .handler(async (): Promise<ManagerProject[]> => {
     return [];
   });
@@ -30,8 +30,8 @@ export const listVisibleJuniors = createServerFn({ method: "GET" })
   .inputValidator((input) =>
     z
       .object({
-        managerId: z.string().uuid(),
-        projectId: z.string().uuid().optional(),
+        managerId: z.string().min(1),
+        projectId: z.string().min(1).optional(),
       })
       .parse(input),
   )
@@ -61,8 +61,8 @@ export const getJuniorProgress = createServerFn({ method: "GET" })
   .inputValidator((input) =>
     z
       .object({
-        managerId: z.string().uuid(),
-        juniorId: z.string().uuid(),
+        managerId: z.string().min(1),
+        juniorId: z.string().min(1),
         from: z.string().datetime().optional(),
         to: z.string().datetime().optional(),
       })

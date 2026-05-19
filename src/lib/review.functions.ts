@@ -21,7 +21,7 @@ function bumpPriority(current: string, direction: "raise" | "lower"): Priority {
 
 export const listImprovements = createServerFn({ method: "GET" })
   .inputValidator((input) =>
-    z.object({ juniorId: z.string().uuid() }).parse(input),
+    z.object({ juniorId: z.string().min(1) }).parse(input),
   )
   .handler(async () => {
     const { data: rows, error } = await supabaseAdmin
@@ -39,8 +39,8 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .object({
         caseId: z.string().uuid(),
         transcript: z.string().min(1).max(200_000),
-        juniorId: z.string().uuid(),
-        projectId: z.string().uuid().optional(),
+        juniorId: z.string().min(1),
+        projectId: z.string().min(1).optional(),
       })
       .parse(input),
   )
