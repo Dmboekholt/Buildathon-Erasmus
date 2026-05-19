@@ -5,6 +5,7 @@ import {
   getScoringPrompt,
   SCORING_RUBRIC_VERSION,
 } from "@/config/scoring";
+import { kimiChatJson } from "@/lib/kimi";
 
 const PRIORITY_ORDER = ["Low", "Medium", "High"] as const;
 type Priority = (typeof PRIORITY_ORDER)[number];
@@ -102,9 +103,6 @@ export const scoreDebrief = createServerFn({ method: "POST" })
     z.object({ debriefId: z.string().uuid() }).parse(input),
   )
   .handler(async ({ data }): Promise<EvaluationResult> => {
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
-
     const { data: debrief, error: dErr } = await supabaseAdmin
       .from("debriefs")
       .select("id, transcript, case_id, junior_id, project_id")
@@ -139,40 +137,7 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       transcript: debrief.transcript ?? "",
     });
 
-    const aiRes = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-          response_format: { type: "json_object" },
-        }),
-      },
-    );
-
-    if (!aiRes.ok) {
-      const text = await aiRes.text();
-      if (aiRes.status === 429)
-        throw new Error("Rate limit reached. Please try again shortly.");
-      if (aiRes.status === 402)
-        throw new Error(
-          "AI credits exhausted. Add credits in Workspace settings.",
-        );
-      throw new Error(`AI gateway error ${aiRes.status}: ${text.slice(0, 200)}`);
-    }
-
-    const aiJson = (await aiRes.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const raw = aiJson.choices?.[0]?.message?.content ?? "{}";
+    const raw = await kimiChatJson({ system, user });
     let parsed: z.infer<typeof EvaluationSchema>;
     try {
       parsed = EvaluationSchema.parse(JSON.parse(raw));
