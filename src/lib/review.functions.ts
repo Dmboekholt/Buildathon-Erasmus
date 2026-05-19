@@ -23,12 +23,11 @@ export const listImprovements = createServerFn({ method: "GET" })
   .inputValidator((input) =>
     z.object({ juniorId: z.string().uuid() }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async () => {
     const { data: rows, error } = await supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority, status, updated_at")
       .eq("status", "open")
-      .eq("junior_id", data.juniorId)
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     return rows ?? [];
@@ -51,8 +50,6 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .insert({
         case_id: data.caseId,
         transcript: data.transcript,
-        junior_id: data.juniorId,
-        project_id: data.projectId ?? null,
         status: "pending",
       })
       .select("id")
