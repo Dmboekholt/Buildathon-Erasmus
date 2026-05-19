@@ -198,6 +198,24 @@ Optional later: upgrade Twilio to drop the trial message entirely.
 
 ---
 
+## Deploy frontend to Vercel
+
+This repo is a **TanStack Start** app. On Vercel it builds with **Nitro** (`.vercel/output`); locally it still builds for **Cloudflare Workers** (`dist/`) when `VERCEL` is unset.
+
+1. Import the Git repo in [Vercel](https://vercel.com/new) (root directory = repo root).
+2. **Build command:** `npm run build` (default). Vercel sets `VERCEL=1`, which switches the Vite config to Nitro + Vercel preset.
+3. **Environment variables** (Project → Settings → Environment Variables) — copy from `.env.example`:
+   - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   - `VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_KEY`, `VITE_SUPABASE_PROJECT_ID`
+   - `LOVABLE_API_KEY`
+   - `VITE_ELEVENLABS_AGENT_ID` (in-browser review)
+   - For in-app phone review: `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`, `ELEVENLABS_PHONE_NUMBER_ID` (or `ELEVENLABS_AGENT_PHONE_NUMBER_ID`)
+4. Deploy. No `outputDirectory` override — Nitro writes the [Build Output API](https://vercel.com/docs/build-output-api/v3) under `.vercel/output`.
+
+**Phone check-ins** still use the Python backend (`backend/`); host that separately (Railway, Fly.io, etc.) and set `PUBLIC_BASE_URL` there for webhooks.
+
+---
+
 ## Demo checklist
 
 | Step | Command / URL |
