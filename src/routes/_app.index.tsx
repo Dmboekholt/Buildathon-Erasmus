@@ -47,55 +47,59 @@ function AnalyticsPage() {
   });
   const improvements: Improvement[] = data ?? [];
   return (
-
-    <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
+    <div className="mx-auto max-w-[1280px] py-20 px-[60px]">
       {/* Hero */}
-      <header className="mb-14 flex items-end justify-between gap-8">
-        <div className="max-w-2xl">
-          <div className="eyebrow mb-4">00. Analytics</div>
-          <h1 className="font-display text-[44px] leading-[48px] tracking-[-0.025em] text-foreground">
+      <header className="mb-16 grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr] md:items-end">
+        <div>
+          <div className="eyebrow mb-5">Netherlands · Analytics</div>
+          <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.015em] text-foreground">
             Signals from every review,
             <br />
-            <span className="text-muted-foreground">measured over time.</span>
+            measured over time.
           </h1>
-          <p className="mt-4 text-body text-muted-foreground">
+          <p className="mt-6 max-w-xl text-body text-foreground">
             Track where decision making, insights, and judgement need the most
-            attention across your open cases.
+            attention across your open work.
           </p>
+          <Link
+            to="/cases"
+            className="mt-8 inline-flex items-center gap-3 bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            Browse cases
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
-        <Link
-          to="/cases"
-          className="inline-flex h-11 items-center gap-2 rounded-pill bg-primary pl-5 pr-2 text-body text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          Browse cases
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-card/15 text-primary-foreground">
-            <ArrowRight className="h-3.5 w-3.5" />
-          </span>
-        </Link>
+        {/* Signature diagonal red accent block */}
+        <div
+          aria-hidden="true"
+          className="bdo-diagonal hidden h-56 w-full md:block"
+        />
       </header>
 
       {/* Section header */}
-      <div className="mb-8 flex items-baseline justify-between border-t border-border pt-6">
+      <div className="mb-10 flex items-baseline justify-between border-t-2 border-foreground pt-6">
         <div>
-          <div className="eyebrow">01.</div>
-          <h2 className="mt-1 text-section text-foreground">Improvements</h2>
+          <div className="eyebrow">01 Improvements</div>
+          <h2 className="mt-2 text-[24px] font-bold leading-tight text-foreground">
+            Open across the practice
+          </h2>
         </div>
-        <span className="font-mono text-caption text-muted-foreground">
+        <span className="text-caption text-muted-foreground">
           {String(improvements.length).padStart(2, "0")} open
         </span>
       </div>
 
       {/* Category score panel */}
-      <section className="mb-12 rounded-lg border border-border bg-card p-8">
-        <div className="mb-6 flex items-baseline justify-between">
-          <h3 className="text-section font-medium text-foreground">
+      <section className="mb-16 border border-border bg-muted p-10">
+        <div className="mb-8 flex items-baseline justify-between">
+          <h3 className="text-[20px] font-bold text-foreground">
             Attention by category
           </h3>
-          <span className="font-mono text-caption text-muted-foreground">
+          <span className="text-caption text-muted-foreground">
             weighted by priority
           </span>
         </div>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           {categories.map((cat) => {
             const catItems = improvements.filter((i) => i.category === cat);
             const score = categoryScore(catItems);
@@ -103,21 +107,23 @@ function AnalyticsPage() {
             return (
               <div key={cat} className="flex flex-col gap-3">
                 <div className="flex items-baseline justify-between">
-                  <span className="text-body text-foreground">{cat}</span>
-                  <span className="font-mono text-caption text-muted-foreground">
+                  <span className="text-[15px] font-bold uppercase tracking-[0.05em] text-foreground">
+                    {cat}
+                  </span>
+                  <span className="text-caption text-muted-foreground">
                     {String(count).padStart(2, "0")} open
                   </span>
                 </div>
                 <div className="flex items-end justify-between gap-4">
-                  <div className="font-display text-[36px] leading-none text-foreground">
+                  <div className="text-[44px] font-bold leading-none text-foreground">
                     {score}
                   </div>
-                  <span className="font-mono text-caption text-muted-foreground">
+                  <span className="text-caption text-muted-foreground">
                     /100
                   </span>
                 </div>
                 <div
-                  className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                  className="h-1 w-full overflow-hidden bg-border"
                   role="progressbar"
                   aria-valuenow={score}
                   aria-valuemin={0}
@@ -125,7 +131,7 @@ function AnalyticsPage() {
                   aria-label={`${cat} score`}
                 >
                   <div
-                    className="h-full rounded-full bg-foreground transition-[width] duration-500"
+                    className="h-full bg-primary transition-[width] duration-500"
                     style={{ width: `${score}%` }}
                   />
                 </div>
@@ -136,32 +142,35 @@ function AnalyticsPage() {
       </section>
 
       {/* Improvement cards */}
-      <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        {improvements.map((item) => {
+      <section className="grid grid-cols-1 gap-0 border-t border-border md:grid-cols-2">
+        {improvements.map((item, idx) => {
           const priorityTone =
             item.priority === "High"
-              ? "border-foreground/40 text-foreground"
+              ? "text-primary"
               : item.priority === "Medium"
-                ? "border-border text-muted-foreground"
-                : "border-border text-muted-foreground/70";
+                ? "text-foreground"
+                : "text-muted-foreground";
           return (
             <article
               key={item.id}
-              className="flex flex-col gap-2.5 rounded-lg border border-border bg-card p-5"
+              className={`flex flex-col gap-3 border-b border-border bg-card p-8 ${
+                idx % 2 === 0 ? "md:border-r" : ""
+              }`}
             >
               <div className="flex items-start justify-between gap-4">
-                <h3 className="text-section font-medium text-foreground">
+                <h3 className="text-[20px] font-bold leading-tight text-foreground">
                   {item.title}
                 </h3>
-                <Badge
-                  variant="outline"
-                  className={`shrink-0 rounded-pill bg-background px-2.5 py-0.5 text-caption font-mono font-normal uppercase tracking-wider ${priorityTone}`}
+                <span
+                  className={`shrink-0 text-[14px] font-bold uppercase tracking-[0.08em] ${priorityTone}`}
                 >
                   {item.priority}
-                </Badge>
+                </span>
               </div>
               <div className="flex items-center gap-2 text-caption text-muted-foreground">
-                <span className="text-foreground">{item.category}</span>
+                <span className="font-bold text-foreground">
+                  {item.category}
+                </span>
                 <span aria-hidden="true">·</span>
                 <span>{item.area}</span>
               </div>

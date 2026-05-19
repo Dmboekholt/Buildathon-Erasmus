@@ -17,68 +17,66 @@ function CasesPage() {
   });
 
   return (
-    <div className="mx-auto max-w-[1280px] py-16 px-[60px]">
+    <div className="mx-auto max-w-[1280px] py-20 px-[60px]">
       <header className="mb-12">
-        <h1 className="text-page-title text-foreground">Cases</h1>
-        <p className="mt-3 text-caption text-muted-foreground">
-          Investment memoranda available for review.
+        <div className="eyebrow mb-4">Netherlands · Cases</div>
+        <h1 className="text-[44px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
+          Cases.
+        </h1>
+        <p className="mt-4 max-w-2xl text-body text-foreground">
+          Memoranda and engagements available for review.
         </p>
       </header>
 
       {isLoading ? (
         <div className="text-caption text-muted-foreground">Loading…</div>
       ) : (data ?? []).length === 0 ? (
-        <div className="text-caption text-muted-foreground">
-          No cases yet.
-        </div>
+        <div className="text-caption text-muted-foreground">No cases yet.</div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {(data ?? []).map((c) => {
+        <div className="grid grid-cols-1 gap-0 border-t border-border md:grid-cols-2">
+          {(data ?? []).map((c, idx) => {
             const priorityTone =
               c.priority === "high"
-                ? "border-foreground/40 text-foreground"
+                ? "text-primary"
                 : c.priority === "medium"
-                  ? "border-border text-muted-foreground"
-                  : "border-border text-muted-foreground/70";
+                  ? "text-foreground"
+                  : "text-muted-foreground";
             return (
               <Link
                 key={c.id}
                 to="/cases/$caseId"
                 params={{ caseId: c.id }}
-                className="block"
+                className={`group flex flex-col gap-6 border-b border-border bg-card p-8 transition-colors hover:bg-muted ${
+                  idx % 2 === 0 ? "md:border-r" : ""
+                }`}
               >
-                <Card className="h-full border-border bg-card transition-colors hover:border-foreground/30">
-                  <CardContent className="flex h-full flex-col gap-6 p-7">
-                    <div className="flex items-start justify-between gap-4">
-                      <h2 className="text-section text-foreground">
-                        {c.title}
-                      </h2>
-                      {c.priority && (
-                        <Badge
-                          variant="outline"
-                          className={`shrink-0 rounded-pill px-2.5 py-0.5 text-caption font-mono font-normal uppercase tracking-wider ${priorityTone}`}
-                        >
-                          {c.priority}
-                        </Badge>
-                      )}
-                    </div>
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-[22px] font-bold leading-tight text-foreground group-hover:text-primary">
+                    {c.title}
+                  </h2>
+                  {c.priority && (
+                    <span
+                      className={`shrink-0 text-[14px] font-bold uppercase tracking-[0.08em] ${priorityTone}`}
+                    >
+                      {c.priority}
+                    </span>
+                  )}
+                </div>
 
-                    <div className="space-y-1.5">
-                      <div className="text-caption font-medium text-foreground">
-                        {c.company}
-                      </div>
-                      <div className="text-caption text-muted-foreground">
-                        {c.industry}
-                      </div>
-                    </div>
+                <div className="space-y-1">
+                  <div className="text-[15px] font-bold uppercase tracking-[0.05em] text-foreground">
+                    {c.company}
+                  </div>
+                  <div className="text-caption text-muted-foreground">
+                    {c.industry}
+                  </div>
+                </div>
 
-                    {c.summary && (
-                      <p className="text-body leading-relaxed text-muted-foreground">
-                        {c.summary}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                {c.summary && (
+                  <p className="text-body leading-relaxed text-foreground">
+                    {c.summary}
+                  </p>
+                )}
               </Link>
             );
           })}
