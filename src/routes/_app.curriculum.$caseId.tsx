@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -55,6 +55,7 @@ function CurriculumCasePage() {
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [result, setResult] = useState<SubmitResult | null>(null);
+  const feedbackRef = useRef<HTMLElement>(null);
 
   const mutation = useMutation({
     mutationFn: async () =>
@@ -68,7 +69,12 @@ function CurriculumCasePage() {
           })),
         },
       }) as Promise<SubmitResult>,
-    onSuccess: (r) => setResult(r),
+    onSuccess: (r) => {
+      setResult(r);
+      requestAnimationFrame(() =>
+        feedbackRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    },
   });
 
   const errorMessage =
@@ -178,8 +184,33 @@ function CurriculumCasePage() {
         </div>
       </section>
 
+      {mutation.isPending && (
+        <section
+          className="mb-12 rounded-lg border border-primary/30 bg-card p-8"
+          aria-live="polite"
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="h-8 w-8 animate-spin rounded-full border-2 border-muted border-t-primary"
+              aria-hidden
+            />
+            <div>
+              <div className="font-bold text-foreground">
+                Checking your answers
+              </div>
+              <p className="text-caption text-muted-foreground">
+                Usually a few seconds with the fast grading model.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       {result && (
-        <section className="mb-12 rounded-lg border border-border bg-card p-10">
+        <section
+          ref={feedbackRef}
+          className="mb-12 rounded-lg border border-border bg-card p-10"
+        >
           <div className="eyebrow mb-3">03 Your feedback</div>
           <div className="flex items-end justify-between gap-6">
             <div>
@@ -277,7 +308,7 @@ function CurriculumCasePage() {
             disabled={mutation.isPending || questions.length === 0}
             className="inline-flex items-center gap-3 rounded-md bg-primary px-8 py-4 text-[15px] font-bold uppercase tracking-[0.05em] text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {mutation.isPending ? "Checking your answers." : "Check my answers"}
+            {mutation.isPending ? "Checking…" : "Check my answers"}
           </button>
           {result?.passed && (
             <Link

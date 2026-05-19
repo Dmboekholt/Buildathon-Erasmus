@@ -1,28 +1,85 @@
 import { z } from "zod";
 import {
+  CURRICULUM_MAX_COMPLETION_TOKENS,
   CURRICULUM_PASS_SCORE,
   getCurriculumScoringPrompt,
 } from "@/config/curriculum-scoring";
 import { kimiChatJson } from "@/lib/kimi";
 
+/** Kimi sometimes returns "None" or a single string instead of JSON arrays. */
+function coerceStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => String(item).trim())
+      .filter((item) => item.length > 0 && !/^none$/i.test(item));
+  }
+  if (value == null) return [];
+  const text = String(value).trim();
+  if (!text || /^none$/i.test(text) || /^n\/a$/i.test(text)) return [];
+  if (text.includes(";")) {
+    return text
+      .split(";")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !/^none$/i.test(s));
+  }
+  if (text.includes(",")) {
+    return text
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0 && !/^none$/i.test(s));
+  }
+  return [text];
+}
+
+function coerceScore(value: unknown): number {
+  const n = typeof value === "number" ? value : Number(value);
+  if (Number.isFinite(n)) return Math.round(Math.min(100, Math.max(0, n)));
+  return 0;
+}
+
+function coerceBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "string") {
+    return /^(true|yes|1|pass)/i.test(value.trim());
+  }
+  return Boolean(value);
+}
+
+const stringArray = z.preprocess(
+  coerceStringArray,
+  z.array(z.string()).max(15),
+);
+
 export const CurriculumEvaluationSchema = z.object({
-  overall_score: z.number().min(0).max(100),
-  passed: z.boolean(),
-  summary: z.string().max(3000),
-  strengths: z.array(z.string()).max(15),
-  gaps: z.array(z.string()).max(15),
-  skill_indicators: z.array(z.string()).max(20),
-  per_question: z
-    .array(
-      z.object({
-        question_id: z.string(),
-        score: z.number().min(0).max(100),
-        feedback: z.string().max(2000),
-        demonstrated: z.array(z.string()).max(15),
-        missing: z.array(z.string()).max(15),
-      }),
-    )
-    .max(10),
+  overall_score: z.preprocess(coerceScore, z.number().min(0).max(100)),
+  passed: z.preprocess(coerceBoolean, z.boolean()),
+  summary: z.preprocess(
+    (v) => String(v ?? "").slice(0, 600),
+    z.string().max(600),
+  ),
+  strengths: stringArray,
+  gaps: stringArray,
+  skill_indicators: z.preprocess(
+    coerceStringArray,
+    z.array(z.string()).max(20),
+  ),
+  per_question: z.preprocess(
+    (v) => (Array.isArray(v) ? v : []),
+    z
+      .array(
+        z.object({
+          question_id: z.preprocess((v) => String(v ?? ""), z.string()),
+          score: z.preprocess(coerceScore, z.number().min(0).max(100)),
+          feedback: z.preprocess(
+            (v) => String(v ?? "").slice(0, 800),
+            z.string().max(800),
+          ),
+          demonstrated: stringArray,
+          missing: stringArray,
+        }),
+      )
+      .max(10),
+  ),
 });
 
 export type CurriculumEvaluation = z.infer<typeof CurriculumEvaluationSchema>;
@@ -47,13 +104,32 @@ export async function scoreCurriculumWithLlm(
     learningObjective: kase.learning_objective?.trim() || "",
     caseText: kase.case_text,
     expectedInsights: kase.expected_insights ?? [],
-    historicalAnswer: kase.historical_answer,
-    seniorReasoning: kase.senior_reasoning,
     questions,
     answers,
   });
 
-  const raw = await kimiChatJson({ system, user });
+  const fastModel =
+    process.env.KIMI_CURRICULUM_MODEL?.trim() || "moonshot-v1-8k";
+  const kimiOptions = {
+    maxCompletionTokens: CURRICULUM_MAX_COMPLETION_TOKENS,
+    temperature: 0,
+  } as const;
+
+  let raw: string;
+  try {
+    raw = await kimiChatJson({
+      system,
+      user,
+      options: { ...kimiOptions, model: fastModel },
+    });
+  } catch (firstErr) {
+    if (fastModel === "kimi-k2.6") throw firstErr;
+    raw = await kimiChatJson({
+      system,
+      user,
+      options: { ...kimiOptions, model: "kimi-k2.6" },
+    });
+  }
   let parsed: CurriculumEvaluation;
   try {
     parsed = CurriculumEvaluationSchema.parse(JSON.parse(raw));
