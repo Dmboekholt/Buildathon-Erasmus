@@ -6,6 +6,7 @@ import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { getCase } from "@/lib/cases.functions";
 import { Badge } from "@/components/ui/badge";
 import { ReviewSession } from "@/components/case/ReviewSession";
+import { PhoneReview } from "@/components/case/PhoneReview";
 import {
   Table,
   TableBody,
@@ -291,6 +292,7 @@ function CaseDetailPage() {
       )}
 
       <ReviewSession analystWork={data.metadata} company={data.company ?? ""} caseId={caseId} />
+      <PhoneReview caseId={caseId} />
     </div>
   );
 }
