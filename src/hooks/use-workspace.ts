@@ -6,7 +6,7 @@ const MODE_KEY = "workspaceMode";
 const MANAGER_KEY = "activeManagerId";
 const JUNIOR_KEY = "activeJuniorId";
 
-const DEFAULT_MANAGER = "22222222-2222-2222-2222-222222222222";
+const DEFAULT_MANAGER = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const DEFAULT_JUNIOR = "11111111-1111-1111-1111-111111111111";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
