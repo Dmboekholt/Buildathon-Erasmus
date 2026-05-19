@@ -23,12 +23,11 @@ export const listImprovements = createServerFn({ method: "GET" })
   .inputValidator((input) =>
     z.object({ juniorId: z.string().uuid() }).parse(input),
   )
-  .handler(async ({ data }) => {
+  .handler(async () => {
     const { data: rows, error } = await supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority, status, updated_at")
       .eq("status", "open")
-      .eq("junior_id", data.juniorId)
       .order("updated_at", { ascending: false });
     if (error) throw new Error(error.message);
     return rows ?? [];
@@ -51,8 +50,6 @@ export const saveDebrief = createServerFn({ method: "POST" })
       .insert({
         case_id: data.caseId,
         transcript: data.transcript,
-        junior_id: data.juniorId,
-        project_id: data.projectId ?? null,
         status: "pending",
       })
       .select("id")
@@ -107,7 +104,7 @@ export const scoreDebrief = createServerFn({ method: "POST" })
 
     const { data: debrief, error: dErr } = await supabaseAdmin
       .from("debriefs")
-      .select("id, transcript, case_id, junior_id, project_id")
+      .select("id, transcript, case_id")
       .eq("id", data.debriefId)
       .maybeSingle();
     if (dErr) throw new Error(dErr.message);
@@ -123,14 +120,10 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       caseContext = c;
     }
 
-    const improvementsQuery = supabaseAdmin
+    const { data: existing, error: iErr } = await supabaseAdmin
       .from("improvements")
       .select("id, title, area, category, priority")
       .eq("status", "open");
-    if (debrief.junior_id) {
-      improvementsQuery.eq("junior_id", debrief.junior_id);
-    }
-    const { data: existing, error: iErr } = await improvementsQuery;
     if (iErr) throw new Error(iErr.message);
 
     const { system, user } = getScoringPrompt({
@@ -234,7 +227,6 @@ export const scoreDebrief = createServerFn({ method: "POST" })
         category: n.category,
         priority: n.priority,
         source_debrief_id: data.debriefId,
-        junior_id: debrief.junior_id,
       }));
       const { error, count } = await supabaseAdmin
         .from("improvements")
@@ -265,18 +257,9 @@ export const scoreDebrief = createServerFn({ method: "POST" })
       })
       .eq("id", data.debriefId);
 
-    if (debrief.junior_id) {
-      await supabaseAdmin.from("score_snapshots").insert({
-        debrief_id: data.debriefId,
-        junior_id: debrief.junior_id,
-        project_id: debrief.project_id,
-        overall_score: parsed.overall_score,
-        decision_making_score: parsed.decision_making_score,
-        insights_score: parsed.insights_score,
-        judgement_score: parsed.judgement_score,
-        rubric_version: SCORING_RUBRIC_VERSION,
-      });
-    }
+    // score_snapshots table is not present in the current schema; skipping.
+    void SCORING_RUBRIC_VERSION;
+
 
     return {
       ...parsed,
