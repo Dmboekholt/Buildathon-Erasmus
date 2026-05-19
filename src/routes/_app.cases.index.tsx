@@ -5,8 +5,10 @@ import { ChevronRight } from "lucide-react";
 
 import { PageEyebrow } from "@/components/layout/PageEyebrow";
 import { PriorityBadge } from "@/components/layout/PriorityBadge";
+import { UploadMemorandumDialog } from "@/components/case/UploadMemorandumDialog";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { listCases } from "@/lib/cases.functions";
+import { formatStatusLabel } from "@/lib/utils";
 
 export const Route = createFileRoute("/_app/cases/")({
   component: CasesPage,
@@ -24,14 +26,17 @@ function CasesPage() {
 
   return (
     <div className="mx-auto max-w-[1280px] px-[60px] py-20">
-      <header className="mb-10">
-        <PageEyebrow index="02" label="Current work" />
-        <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
-          Available for review
-        </h1>
-        <p className="mt-2 max-w-2xl text-caption text-muted-foreground">
-          Memoranda and engagements assigned for voice review.
-        </p>
+      <header className="mb-10 flex items-start justify-between gap-6">
+        <div>
+          <PageEyebrow index="02" label="Current work" />
+          <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
+            Available for review
+          </h1>
+          <p className="mt-2 max-w-2xl text-caption text-muted-foreground">
+            Memoranda and engagements assigned for voice review.
+          </p>
+        </div>
+        <UploadMemorandumDialog />
       </header>
 
       <section>
@@ -54,7 +59,7 @@ function CasesPage() {
                 <div className="min-w-0 flex-1">
                   {c.status ? (
                     <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-                      {c.status}
+                      {formatStatusLabel(c.status)}
                     </p>
                   ) : null}
                   <h3 className="mt-0.5 text-[16px] font-bold leading-snug text-foreground group-hover:text-primary">

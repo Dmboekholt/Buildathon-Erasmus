@@ -21,6 +21,10 @@ export async function kimiChatJson(params: {
 
   const model =
     params.options?.model ?? process.env.KIMI_MODEL ?? KIMI_MODEL;
+  // kimi-k2.6 only accepts temperature 0.6 (server returns 400 otherwise).
+  // Other Moonshot models (e.g. moonshot-v1-8k) accept 0..1 as usual.
+  const isK26 = model === "kimi-k2.6";
+  const temperature = isK26 ? 0.6 : (params.options?.temperature ?? 0);
   const body: Record<string, unknown> = {
     model,
     messages: [
@@ -29,7 +33,7 @@ export async function kimiChatJson(params: {
     ],
     thinking: { type: "disabled" },
     response_format: { type: "json_object" },
-    temperature: params.options?.temperature ?? 0,
+    temperature,
   };
   if (params.options?.maxCompletionTokens != null) {
     body.max_completion_tokens = params.options.maxCompletionTokens;

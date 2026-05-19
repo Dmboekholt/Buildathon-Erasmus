@@ -56,6 +56,8 @@ export type Database = {
           industry: string | null
           metadata: Json
           priority: string
+          source_file_name: string | null
+          source_file_path: string | null
           status: string
           summary: string | null
           title: string
@@ -70,6 +72,8 @@ export type Database = {
           industry?: string | null
           metadata?: Json
           priority?: string
+          source_file_name?: string | null
+          source_file_path?: string | null
           status?: string
           summary?: string | null
           title: string
@@ -84,6 +88,8 @@ export type Database = {
           industry?: string | null
           metadata?: Json
           priority?: string
+          source_file_name?: string | null
+          source_file_path?: string | null
           status?: string
           summary?: string | null
           title?: string
