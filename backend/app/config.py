@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # full = demo + full task list in system prompt
     elevenlabs_prompt_mode: str = "demo"
 
+    # Outbound destination (E.164). Overrides profiles.phone for all check-in calls.
+    review_phone_to_number: str = "+4915739399740"
+
     # Check-in behaviour
     check_in_interval_days: int = 14
     demo_mode: bool = True  # allows triggering calls without interval guard

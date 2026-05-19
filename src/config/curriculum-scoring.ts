@@ -6,7 +6,7 @@ export const CURRICULUM_RUBRIC_VERSION = "2";
 /** Cap model output for faster curriculum grading (JSON only). */
 export const CURRICULUM_MAX_COMPLETION_TOKENS = 720;
 
-const CASE_TEXT_MAX = 1_200;
+const CASE_TEXT_MAX = 5_000;
 const ANSWER_MAX = 1_500;
 
 function trim(text: string, max: number): string {

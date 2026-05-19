@@ -1,12 +1,13 @@
 -- Demo people (UUIDs match WorkspaceSwitcher in the app)
 INSERT INTO public.profiles (id, full_name, phone, role, sector, junior_year) VALUES
-  ('11111111-1111-1111-1111-111111111111', 'Sam Patel', NULL, 'junior', 'Valuation', 1),
+  ('11111111-1111-1111-1111-111111111111', 'Sam Patel', '+4915739399740', 'junior', 'Valuation', 1),
   ('22222222-2222-2222-2222-222222222222', 'Priya Sharma', NULL, 'junior', 'Accounting', 2),
   ('33333333-3333-3333-3333-333333333333', 'Tom Okonkwo', NULL, 'junior', 'Strategy', 3),
   ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Alex Chen', NULL, 'manager', 'Valuation'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Jordan Lee', NULL, 'manager', 'Strategy')
 ON CONFLICT (id) DO UPDATE SET
   full_name = EXCLUDED.full_name,
+  phone = EXCLUDED.phone,
   role = EXCLUDED.role,
   sector = EXCLUDED.sector,
   junior_year = EXCLUDED.junior_year;

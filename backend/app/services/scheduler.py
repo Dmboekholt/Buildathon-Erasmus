@@ -142,9 +142,11 @@ def run_check_in_for_junior(
     if _has_active_check_in(supabase, junior_id):
         raise ValueError("Junior already has a scheduled or in-progress check-in")
 
-    phone = profile.get("phone")
+    phone = settings.review_phone_to_number.strip() or profile.get("phone")
     if not phone:
-        raise ValueError("Junior has no phone number on file")
+        raise ValueError(
+            "No destination phone: set REVIEW_PHONE_TO_NUMBER or profiles.phone"
+        )
 
     check_in_id = create_check_in_record(
         supabase,

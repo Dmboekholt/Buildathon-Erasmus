@@ -1,15 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { DEFAULT_REVIEW_PHONE_TO_NUMBER } from "@/config/review-phone";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const ELEVENLABS_API = "https://api.elevenlabs.io/v1";
 
 const E164_REGEX = /^\+[1-9]\d{6,14}$/;
 
+function normalizeE164(phone: string): string {
+  return phone.trim().replace(/[\s-]/g, "");
+}
+
 function getReviewPhoneToNumber(): string {
-  const raw = process.env.REVIEW_PHONE_TO_NUMBER?.trim() ?? "";
-  if (!raw || !E164_REGEX.test(raw)) {
-    throw new Error("REVIEW_PHONE_TO_NUMBER is not configured");
+  const raw = normalizeE164(
+    process.env.REVIEW_PHONE_TO_NUMBER ?? DEFAULT_REVIEW_PHONE_TO_NUMBER,
+  );
+  if (!E164_REGEX.test(raw)) {
+    throw new Error(
+      `REVIEW_PHONE_TO_NUMBER must be E.164 (e.g. ${DEFAULT_REVIEW_PHONE_TO_NUMBER})`,
+    );
   }
   return raw;
 }
