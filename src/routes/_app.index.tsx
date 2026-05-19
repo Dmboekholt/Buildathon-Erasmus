@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+
 import { getActiveJuniorId } from "@/hooks/use-workspace";
 import { listImprovements } from "@/lib/review.functions";
 
