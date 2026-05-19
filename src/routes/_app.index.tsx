@@ -49,7 +49,7 @@ function AnalyticsPage() {
   return (
     <div className="mx-auto max-w-[1280px] py-20 px-[60px]">
       {/* Hero */}
-      <header className="mb-16 grid grid-cols-1 gap-10 md:grid-cols-[1.4fr_1fr] md:items-end">
+      <header className="mb-16">
         <div>
           <div className="eyebrow mb-5">Netherlands · Analytics</div>
           <h1 className="text-[44px] font-bold leading-[1.05] tracking-[-0.015em] text-foreground">
@@ -69,11 +69,6 @@ function AnalyticsPage() {
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        {/* Signature diagonal red accent block */}
-        <div
-          aria-hidden="true"
-          className="bdo-diagonal hidden h-56 w-full md:block"
-        />
       </header>
 
       {/* Section header */}
