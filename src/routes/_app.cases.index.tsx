@@ -1,6 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
+import { ChevronRight } from "lucide-react";
+
+import { PageEyebrow } from "@/components/layout/PageEyebrow";
+import { PriorityBadge } from "@/components/layout/PriorityBadge";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { listCases } from "@/lib/cases.functions";
 
@@ -16,70 +20,52 @@ function CasesPage() {
     queryFn: () => fetchCases({ data: { juniorId } }),
   });
 
+  const cases = data ?? [];
+
   return (
-    <div className="mx-auto max-w-[1280px] py-20 px-[60px]">
-      <header className="mb-12">
-        <div className="eyebrow mb-4">Netherlands · Cases</div>
-        <h1 className="text-[44px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
-          Cases.
+    <div className="mx-auto max-w-[1280px] px-[60px] py-20">
+      <header className="mb-10">
+        <PageEyebrow index="02" label="Current work" />
+        <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
+          Available for review
         </h1>
-        <p className="mt-4 max-w-2xl text-body text-foreground">
-          Memoranda and engagements available for review.
-        </p>
       </header>
 
-      {isLoading ? (
-        <div className="text-caption text-muted-foreground">Loading…</div>
-      ) : (data ?? []).length === 0 ? (
-        <div className="text-caption text-muted-foreground">No cases yet.</div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {(data ?? []).map((c) => {
-            const priorityTone =
-              c.priority === "high"
-                ? "text-primary"
-                : c.priority === "medium"
-                  ? "text-foreground"
-                  : "text-muted-foreground";
-            return (
+      <section>
+        <h2 className="mb-6 text-[20px] font-bold text-foreground">
+          Memoranda and engagements
+        </h2>
+        {isLoading ? (
+          <p className="text-caption text-muted-foreground">Loading…</p>
+        ) : cases.length === 0 ? (
+          <p className="text-caption text-muted-foreground">No cases yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+            {cases.map((c) => (
               <Link
                 key={c.id}
                 to="/cases/$caseId"
                 params={{ caseId: c.id }}
-                className="group flex flex-col gap-6 rounded-lg border border-border bg-card p-8 transition-colors hover:bg-muted"
+                className="group flex items-center gap-4 rounded-lg border border-border bg-card px-6 py-5 transition-colors hover:bg-muted"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-[22px] font-bold leading-tight text-foreground group-hover:text-primary">
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-[16px] font-bold leading-snug text-foreground group-hover:text-primary">
                     {c.title}
-                  </h2>
-                  {c.priority && (
-                    <span
-                      className={`shrink-0 text-[14px] font-bold uppercase tracking-[0.08em] ${priorityTone}`}
-                    >
-                      {c.priority}
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-[15px] font-bold uppercase tracking-[0.05em] text-foreground">
+                  </h3>
+                  <p className="mt-1 text-[13px] text-muted-foreground">
                     {c.company}
-                  </div>
-                  <div className="text-caption text-muted-foreground">
-                    {c.industry}
-                  </div>
-                </div>
-
-                {c.summary && (
-                  <p className="text-body leading-relaxed text-foreground">
-                    {c.summary}
+                    {c.industry ? ` · ${c.industry}` : ""}
                   </p>
-                )}
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  {c.priority ? <PriorityBadge priority={c.priority} /> : null}
+                  <ChevronRight className="h-5 w-5 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5" />
+                </div>
               </Link>
-            );
-          })}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

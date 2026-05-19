@@ -1,8 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowRight, ChevronRight, TrendingUp } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
+import { PageCtaBanner } from "@/components/layout/PageCtaBanner";
+import { PageEyebrow } from "@/components/layout/PageEyebrow";
+import { PriorityBadge } from "@/components/layout/PriorityBadge";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { listImprovements } from "@/lib/review.functions";
 
@@ -40,29 +43,6 @@ function categoryScore(items: Improvement[]) {
   return Math.min(100, Math.round((raw / 15) * 100));
 }
 
-function PriorityBadge({ priority }: { priority: string }) {
-  const label = priority.toUpperCase();
-  if (label === "HIGH") {
-    return (
-      <span className="shrink-0 rounded-full bg-[#fce4ec] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-primary">
-        HIGH
-      </span>
-    );
-  }
-  if (label === "MEDIUM") {
-    return (
-      <span className="shrink-0 rounded-full bg-[#fff3e0] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-[#e65100]">
-        MEDIUM
-      </span>
-    );
-  }
-  return (
-    <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-[11px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-      {label === "LOW" ? "Low" : priority}
-    </span>
-  );
-}
-
 function ImprovementsPage() {
   const { juniorId } = useWorkspace();
   const fetchImprovements = useServerFn(listImprovements);
@@ -82,10 +62,7 @@ function ImprovementsPage() {
   return (
     <div className="mx-auto max-w-[1280px] px-[60px] py-20">
       <header className="mb-10">
-        <div className="text-[14px] font-bold uppercase tracking-[0.08em]">
-          <span className="text-primary">01</span>
-          <span className="text-muted-foreground"> Improvements</span>
-        </div>
+        <PageEyebrow index="01" label="Improvements" />
         <h1 className="mt-3 text-[36px] font-bold leading-[1.1] tracking-[-0.015em] text-foreground">
           Open across the practice
         </h1>
@@ -155,44 +132,20 @@ function ImprovementsPage() {
                     {item.category} · {item.area}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-3">
-                  <PriorityBadge priority={item.priority} />
-                  <ChevronRight
-                    className="h-5 w-5 text-muted-foreground/40"
-                    aria-hidden
-                  />
-                </div>
+                <PriorityBadge priority={item.priority} />
               </article>
             ))}
           </div>
         )}
       </section>
 
-      <section className="mt-12 flex flex-col items-start justify-between gap-6 rounded-lg border border-border bg-card px-8 py-6 sm:flex-row sm:items-center">
-        <div className="flex items-center gap-4">
-          <div
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#fce4ec]"
-            aria-hidden
-          >
-            <TrendingUp className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-[16px] font-bold text-foreground">
-              Small steps drive big improvements.
-            </p>
-            <p className="mt-0.5 text-caption text-muted-foreground">
-              Keep reviewing, keep improving.
-            </p>
-          </div>
-        </div>
-        <Link
-          to="/cases"
-          className="inline-flex shrink-0 items-center gap-2 rounded-md border border-border bg-card px-5 py-2.5 text-[14px] font-bold text-foreground transition-colors hover:bg-muted"
-        >
-          Browse all cases
-          <ArrowRight className="h-4 w-4" />
-        </Link>
-      </section>
+      <PageCtaBanner
+        icon={TrendingUp}
+        title="Small steps drive big improvements."
+        subtitle="Keep reviewing, keep improving."
+        linkTo="/cases"
+        linkLabel="Browse all cases"
+      />
     </div>
   );
 }
